@@ -123,6 +123,33 @@ void main() {
     await tester.pumpAndSettle();
     expect(completedWith, UserRole.partner);
   });
+
+  testWidgets('Get Started reports the mother role too', (
+    WidgetTester tester,
+  ) async {
+    // The other branch of the routing switch in main.dart — partner is covered
+    // above, and each role goes somewhere different.
+    UserRole? completedWith;
+    await pumpWelcome(
+      tester,
+      onCompleted: (UserRole role) => completedWith = role,
+    );
+
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Next'));
+    await tester.pumpAndSettle();
+
+    final Finder motherCard = find.text('I am the Expectant Mother');
+    await tester.ensureVisible(motherCard);
+    await tester.pumpAndSettle();
+    await tester.tap(motherCard);
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.widgetWithText(FilledButton, 'Get Started'));
+    await tester.pumpAndSettle();
+    expect(completedWith, UserRole.expectantMother);
+  });
 }
 
 /// Hosts the flow with the same localization setup the real app uses, holding

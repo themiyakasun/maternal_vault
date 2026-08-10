@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/app_locales.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/brand_backdrop.dart';
 import '../../domain/user_role.dart';
 import '../steps/about_step.dart';
 import '../steps/language_step.dart';
@@ -65,19 +66,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     final bool compact = MediaQuery.sizeOf(context).height < 700;
 
     return Scaffold(
-      body: DecoratedBox(
-        decoration: const BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topCenter,
-            end: Alignment.bottomCenter,
-            colors: <Color>[
-              Color(0xFFFDF4F6),
-              Color(0xFFFCFAFE),
-              Color(0xFFFBF5F7),
-            ],
-            stops: <double>[0.0, 0.5, 1.0],
-          ),
-        ),
+      body: BrandBackdrop(
         child: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(

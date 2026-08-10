@@ -39,5 +39,20 @@
   "actionBack": "ආපසු",
   "actionGetStarted": "පටන් ගන්න",
 
-  "stepIndicator": "පියවර {current} / {total}"
+  "stepIndicator": "පියවර {current} / {total}",
+
+  "partnerConnectTitle": "මවගේ වාර්තාවට සම්බන්ධ වන්න",
+  "partnerConnectBody": "නවතම සෞඛ්‍ය වාර්තා සහ වැදගත් සන්ධිස්ථාන ආරක්ෂිතව ඕෆ්ලයින්ව යාවත්කාලීන කිරීමට ඔබේ සහකරුගේ යෙදුමේ ඇති ආරක්ෂිත කේතය ස්කෑන් කරන්න.",
+  "partnerScanReady": "ස්කෑන් කිරීමට සූදානම්",
+  "partnerActionScanNow": "දැන් ස්කෑන් කරන්න",
+  "partnerActionEnterCode": "කේතය අතින් ඇතුළත් කරන්න",
+
+  "vaultSetupTitle": "ඔබේ වෝල්ට් එක සූදානම් වෙමින්",
+  "vaultSetupBody": "අපි ඔබේ පෞද්ගලික වාර්තාව මෙම උපාංගයේ සාදා සංකේතනය කරමින් සිටිමු.",
+  "vaultStageCreatingRecord": "ඔබේ ආරක්ෂිත වාර්තාව සාදමින්",
+  "vaultStageEncrypting": "ඔබේ දත්ත සංකේතනය වෙමින්",
+  "vaultStageFinishing": "සියල්ල සූදානම් වෙමින්",
+  "vaultStageStatusDone": "අවසන්",
+  "vaultStageStatusActive": "ක්‍රියාත්මකයි",
+  "vaultStageStatusPending": "රැඳී සිටිමින්"
 }

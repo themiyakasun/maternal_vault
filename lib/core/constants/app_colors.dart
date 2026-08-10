@@ -103,4 +103,21 @@ abstract final class AppColors {
       offset: Offset(0, 8),
     ),
   ];
+
+  /// The standard page backdrop — a barely-there rose wash, warmer at the top
+  /// and bottom than in the middle. Apply it through `BrandBackdrop` rather
+  /// than hand-rolling a [DecoratedBox] per screen.
+  ///
+  /// The splash keeps its own gradient: it carries the illustration behind the
+  /// mark and needs different stops to clear it.
+  static const LinearGradient pageGradient = LinearGradient(
+    begin: Alignment.topCenter,
+    end: Alignment.bottomCenter,
+    colors: <Color>[
+      Color(0xFFFDF4F6),
+      Color(0xFFFCFAFE),
+      Color(0xFFFBF5F7),
+    ],
+    stops: <double>[0.0, 0.5, 1.0],
+  );
 }

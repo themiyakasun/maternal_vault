@@ -118,5 +118,59 @@
       "current": { "type": "int", "example": "2" },
       "total": { "type": "int", "example": "3" }
     }
+  },
+
+  "partnerConnectTitle": "Connect to Mother's Record",
+  "@partnerConnectTitle": {
+    "description": "Heading of the partner's first screen after onboarding."
+  },
+  "partnerConnectBody": "Scan the secure code on your partner's app to update the latest health records and milestones safely offline.",
+  "@partnerConnectBody": {
+    "description": "Supporting copy explaining what scanning the code does."
+  },
+  "partnerScanReady": "Ready to scan",
+  "@partnerScanReady": {
+    "description": "Status chip on the scan preview card, shown before a scan starts."
+  },
+  "partnerActionScanNow": "Scan Now",
+  "@partnerActionScanNow": {
+    "description": "Primary button — opens the camera to read the sync code."
+  },
+  "partnerActionEnterCode": "Enter Code Manually",
+  "@partnerActionEnterCode": {
+    "description": "Secondary button — type the sync code instead of scanning it."
+  },
+
+  "vaultSetupTitle": "Preparing your vault",
+  "@vaultSetupTitle": {
+    "description": "Heading of the mother's setup progress screen."
+  },
+  "vaultSetupBody": "We're creating your private record and encrypting it on this device.",
+  "@vaultSetupBody": {
+    "description": "Supporting copy under the vault setup heading."
+  },
+  "vaultStageCreatingRecord": "Creating your secure record",
+  "@vaultStageCreatingRecord": {
+    "description": "Vault setup checklist, stage 1."
+  },
+  "vaultStageEncrypting": "Encrypting your data",
+  "@vaultStageEncrypting": {
+    "description": "Vault setup checklist, stage 2."
+  },
+  "vaultStageFinishing": "Getting everything ready",
+  "@vaultStageFinishing": {
+    "description": "Vault setup checklist, stage 3."
+  },
+  "vaultStageStatusDone": "Done",
+  "@vaultStageStatusDone": {
+    "description": "Screen-reader value for a finished setup stage. Not shown on screen."
+  },
+  "vaultStageStatusActive": "In progress",
+  "@vaultStageStatusActive": {
+    "description": "Screen-reader value for the running setup stage. Not shown on screen."
+  },
+  "vaultStageStatusPending": "Waiting",
+  "@vaultStageStatusPending": {
+    "description": "Screen-reader value for a setup stage that has not started. Not shown on screen."
   }
 }

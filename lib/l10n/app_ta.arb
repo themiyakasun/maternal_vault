@@ -39,5 +39,20 @@
   "actionBack": "பின்",
   "actionGetStarted": "தொடங்கவும்",
 
-  "stepIndicator": "படி {current} / {total}"
+  "stepIndicator": "படி {current} / {total}",
+
+  "partnerConnectTitle": "தாயின் பதிவுடன் இணையுங்கள்",
+  "partnerConnectBody": "சமீபத்திய சுகாதாரப் பதிவுகளையும் முக்கிய நிகழ்வுகளையும் ஆஃப்லைனில் பாதுகாப்பாகப் புதுப்பிக்க, உங்கள் துணைவரின் செயலியில் உள்ள பாதுகாப்பான குறியீட்டை ஸ்கேன் செய்யுங்கள்.",
+  "partnerScanReady": "ஸ்கேன் செய்யத் தயார்",
+  "partnerActionScanNow": "இப்போது ஸ்கேன் செய்",
+  "partnerActionEnterCode": "குறியீட்டைக் கைமுறையாக உள்ளிடு",
+
+  "vaultSetupTitle": "உங்கள் வால்ட் தயாராகிறது",
+  "vaultSetupBody": "உங்கள் தனிப்பட்ட பதிவை உருவாக்கி, இந்தச் சாதனத்தில் குறியாக்கம் செய்கிறோம்.",
+  "vaultStageCreatingRecord": "உங்கள் பாதுகாப்பான பதிவை உருவாக்குகிறோம்",
+  "vaultStageEncrypting": "உங்கள் தரவைக் குறியாக்கம் செய்கிறோம்",
+  "vaultStageFinishing": "எல்லாவற்றையும் தயார் செய்கிறோம்",
+  "vaultStageStatusDone": "முடிந்தது",
+  "vaultStageStatusActive": "நடைபெறுகிறது",
+  "vaultStageStatusPending": "காத்திருக்கிறது"
 }
