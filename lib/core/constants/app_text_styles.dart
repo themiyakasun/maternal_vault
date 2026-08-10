@@ -9,7 +9,7 @@ import 'app_colors.dart';
 /// so they scale with the user's text-size preference; the comment on each
 /// style records the design spec in pixels.
 abstract final class AppTextStyles {
-  /// The single family used across the app.
+  /// The family name used across the app.
   static const String fontFamily = 'Inter';
 
   /// Screen titles. 32/40, -0.02em.

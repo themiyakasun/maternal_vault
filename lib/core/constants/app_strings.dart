@@ -6,7 +6,11 @@
 abstract final class AppStrings {
   // App
   static const String appName = 'Maternal Vault';
-  static const String appTagline = 'Your pregnancy, on record.';
+  static const String appTagline = 'Secure today, stronger tomorrow';
+
+  /// The wordmark is set in two tones; these are its halves.
+  static const String brandFirstWord = 'Maternal';
+  static const String brandSecondWord = 'Vault';
 
   // Bottom navigation — 5 tabs
   static const String navHome = 'Home';
