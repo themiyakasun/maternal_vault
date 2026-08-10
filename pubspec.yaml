@@ -31,6 +31,14 @@ dependencies:
   flutter:
     sdk: flutter
 
+  # Bundles the Material/Cupertino widget translations for every locale we ship,
+  # so framework-owned copy (date pickers, dialogs) follows the chosen language.
+  flutter_localizations:
+    sdk: flutter
+
+  # Pinned by flutter_localizations — `any` keeps us from fighting that pin.
+  intl: any
+
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class for iOS style icons.
   cupertino_icons: ^1.0.8
@@ -55,6 +63,10 @@ flutter:
   # included with your application, so that you can use the icons in
   # the material Icons class.
   uses-material-design: true
+
+  # Runs `gen-l10n` as part of the build, turning lib/l10n/*.arb into the
+  # AppLocalizations class. Configured by l10n.yaml at the project root.
+  generate: true
 
   assets:
     - assets/images/

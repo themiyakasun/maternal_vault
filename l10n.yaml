@@ -1,0 +1,12 @@
+# Configuration for `flutter gen-l10n`, which turns the ARB files in lib/l10n
+# into the AppLocalizations class. Regenerated automatically on every build
+# because pubspec.yaml sets `generate: true`.
+arb-dir: lib/l10n
+template-arb-file: app_en.arb
+output-dir: lib/l10n/generated
+output-localization-file: app_localizations.dart
+output-class: AppLocalizations
+
+# Emit non-nullable getters so callers can write `AppLocalizations.of(context)`
+# without a null check on every lookup.
+nullable-getter: false

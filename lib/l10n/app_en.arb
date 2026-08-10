@@ -1,0 +1,122 @@
+{
+  "@@locale": "en",
+
+  "appName": "Maternal Vault",
+  "@appName": {
+    "description": "Product name. Not translated — it is the brand wordmark."
+  },
+  "appTagline": "Secure today, stronger tomorrow",
+  "@appTagline": {
+    "description": "Short brand promise shown under the wordmark on the splash."
+  },
+  "welcomeEyebrow": "Welcome to",
+  "@welcomeEyebrow": {
+    "description": "Small caps line sitting directly above the wordmark in the welcome header."
+  },
+
+  "badgeSecure": "Secure",
+  "@badgeSecure": {
+    "description": "Value pill in the welcome header — records are encrypted."
+  },
+  "badgePersonal": "Personal",
+  "@badgePersonal": {
+    "description": "Value pill in the welcome header — the record belongs to the user."
+  },
+  "badgeMadeForYou": "Made for You",
+  "@badgeMadeForYou": {
+    "description": "Value pill in the welcome header — the app adapts to the user."
+  },
+
+  "languageStepTitle": "Choose your language",
+  "@languageStepTitle": {
+    "description": "Heading of welcome step 1."
+  },
+  "languageStepBody": "Pick the language you are most comfortable reading. You can change it any time in Settings.",
+  "@languageStepBody": {
+    "description": "Supporting copy under the step 1 heading."
+  },
+  "languageNameEnglish": "English",
+  "@languageNameEnglish": {
+    "description": "English written in English — the endonym, identical in every locale."
+  },
+  "languageNameSinhala": "සිංහල",
+  "@languageNameSinhala": {
+    "description": "Sinhala written in Sinhala — the endonym, identical in every locale."
+  },
+  "languageNameTamil": "தமிழ்",
+  "@languageNameTamil": {
+    "description": "Tamil written in Tamil — the endonym, identical in every locale."
+  },
+  "languageSubtitleEnglish": "English",
+  "@languageSubtitleEnglish": {
+    "description": "The name of the English language, translated into the current locale."
+  },
+  "languageSubtitleSinhala": "Sinhala",
+  "@languageSubtitleSinhala": {
+    "description": "The name of the Sinhala language, translated into the current locale."
+  },
+  "languageSubtitleTamil": "Tamil",
+  "@languageSubtitleTamil": {
+    "description": "The name of the Tamil language, translated into the current locale."
+  },
+  "languageSelectedSemantics": "Selected",
+  "@languageSelectedSemantics": {
+    "description": "Screen-reader announcement for the currently chosen language tile."
+  },
+
+  "aboutStepTitle": "Your pregnancy, safely in hand",
+  "@aboutStepTitle": {
+    "description": "Heading of welcome step 2."
+  },
+  "aboutStepBody": "Maternal Vault keeps every check-up, vital and scan in one private record — on your phone, ready even without a signal.",
+  "@aboutStepBody": {
+    "description": "Supporting copy under the step 2 heading."
+  },
+  "aboutFeatureOfflineTitle": "Works offline",
+  "@aboutFeatureOfflineTitle": {},
+  "aboutFeatureOfflineBody": "Log vitals and appointments anywhere. Everything syncs once you are back online.",
+  "@aboutFeatureOfflineBody": {},
+  "aboutFeaturePrivateTitle": "Private by default",
+  "@aboutFeaturePrivateTitle": {},
+  "aboutFeaturePrivateBody": "Your records stay encrypted on your device. Nothing leaves without your say-so.",
+  "@aboutFeaturePrivateBody": {},
+  "aboutFeatureShareTitle": "Share with care",
+  "@aboutFeatureShareTitle": {},
+  "aboutFeatureShareBody": "Generate a one-time code so your partner or midwife sees only what matters.",
+  "@aboutFeatureShareBody": {},
+
+  "roleStepTitle": "How will you be using Maternal Vault?",
+  "@roleStepTitle": {
+    "description": "Heading of welcome step 3."
+  },
+  "roleStepBody": "Choose the option that fits you. You can change this later in Settings.",
+  "@roleStepBody": {
+    "description": "Supporting copy under the step 3 heading."
+  },
+  "roleMotherTitle": "I am the Expectant Mother",
+  "@roleMotherTitle": {},
+  "roleMotherBody": "Set up your secure offline record, log vitals, and generate sync codes.",
+  "@roleMotherBody": {},
+  "rolePartnerTitle": "I am the Partner / Support",
+  "@rolePartnerTitle": {},
+  "rolePartnerBody": "Scan a code to securely connect to the mother's vault and view offline updates.",
+  "@rolePartnerBody": {},
+
+  "actionNext": "Next",
+  "@actionNext": {},
+  "actionBack": "Back",
+  "@actionBack": {},
+  "actionGetStarted": "Get Started",
+  "@actionGetStarted": {
+    "description": "Primary button label on the final welcome step."
+  },
+
+  "stepIndicator": "Step {current} of {total}",
+  "@stepIndicator": {
+    "description": "Screen-reader label for the welcome progress dots.",
+    "placeholders": {
+      "current": { "type": "int", "example": "2" },
+      "total": { "type": "int", "example": "3" }
+    }
+  }
+}

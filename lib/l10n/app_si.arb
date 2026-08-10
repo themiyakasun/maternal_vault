@@ -1,0 +1,43 @@
+{
+  "@@locale": "si",
+
+  "appName": "Maternal Vault",
+  "appTagline": "අද ආරක්ෂිතයි, හෙට වඩාත් ශක්තිමත්",
+  "welcomeEyebrow": "සාදරයෙන් පිළිගනිමු",
+
+  "badgeSecure": "ආරක්ෂිතයි",
+  "badgePersonal": "පෞද්ගලිකයි",
+  "badgeMadeForYou": "ඔබ වෙනුවෙන්",
+
+  "languageStepTitle": "ඔබේ භාෂාව තෝරන්න",
+  "languageStepBody": "ඔබට කියවීමට වඩාත් පහසු භාෂාව තෝරන්න. සැකසුම් තුළින් ඕනෑම වේලාවක එය වෙනස් කළ හැකිය.",
+  "languageNameEnglish": "English",
+  "languageNameSinhala": "සිංහල",
+  "languageNameTamil": "தமிழ்",
+  "languageSubtitleEnglish": "ඉංග්‍රීසි",
+  "languageSubtitleSinhala": "සිංහල",
+  "languageSubtitleTamil": "දෙමළ",
+  "languageSelectedSemantics": "තෝරාගෙන ඇත",
+
+  "aboutStepTitle": "ඔබේ ගැබ් කාලය, ආරක්ෂිතව ඔබ අතේ",
+  "aboutStepBody": "සෑම සායනයක්ම, සෑම මිනුමක්ම සහ සෑම ස්කෑන් එකක්ම එකම පෞද්ගලික වාර්තාවක — ඔබේ දුරකථනයේ, සංඥාවක් නැති විටත් සූදානම්.",
+  "aboutFeatureOfflineTitle": "අන්තර්ජාලය නොමැතිවත් ක්‍රියා කරයි",
+  "aboutFeatureOfflineBody": "ඕනෑම තැනක සිට මිනුම් සහ හමුවීම් සටහන් කරන්න. නැවත සම්බන්ධ වූ විට සියල්ල සමමුහුර්ත වේ.",
+  "aboutFeaturePrivateTitle": "පෙරනිමියෙන්ම පෞද්ගලිකයි",
+  "aboutFeaturePrivateBody": "ඔබේ වාර්තා ඔබේ උපාංගය තුළම සංකේතනය වී පවතී. ඔබේ අවසරයකින් තොරව කිසිවක් පිටතට නොයයි.",
+  "aboutFeatureShareTitle": "සැලකිල්ලෙන් බෙදාගන්න",
+  "aboutFeatureShareBody": "ඔබේ සහකරුට හෝ වින්නඹු මාතාවට වැදගත් දේ පමණක් පෙනෙන පරිදි එක් වරක් කේතයක් සාදන්න.",
+
+  "roleStepTitle": "ඔබ Maternal Vault භාවිත කරන්නේ කෙසේද?",
+  "roleStepBody": "ඔබට ගැළපෙන විකල්පය තෝරන්න. පසුව සැකසුම් තුළින් මෙය වෙනස් කළ හැකිය.",
+  "roleMotherTitle": "මම අනාගත මවයි",
+  "roleMotherBody": "ඔබේ ආරක්ෂිත ඕෆ්ලයින් වාර්තාව සකසන්න, මිනුම් සටහන් කරන්න, සමමුහුර්ත කේත සාදන්න.",
+  "rolePartnerTitle": "මම සහකරු / සහයකයා වෙමි",
+  "rolePartnerBody": "මවගේ වෝල්ට් එකට ආරක්ෂිතව සම්බන්ධ වී ඕෆ්ලයින් යාවත්කාලීන කිරීම් බැලීමට කේතයක් ස්කෑන් කරන්න.",
+
+  "actionNext": "ඊළඟ",
+  "actionBack": "ආපසු",
+  "actionGetStarted": "පටන් ගන්න",
+
+  "stepIndicator": "පියවර {current} / {total}"
+}

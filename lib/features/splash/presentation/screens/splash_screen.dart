@@ -166,8 +166,13 @@ class _SplashScreenState extends State<SplashScreen>
                 ).createShader(bounds);
               },
               blendMode: BlendMode.dstIn,
+              // Every bound is pinned, not just the maxima: the incoming
+              // constraints are tight to the viewport, so overriding maxWidth
+              // alone leaves minWidth > maxWidth on any viewport wider than it
+              // is tall.
               child: OverflowBox(
                 alignment: Alignment.center,
+                minWidth: w,
                 maxWidth: w,
                 minHeight: h,
                 maxHeight: h,

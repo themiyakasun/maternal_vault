@@ -33,6 +33,10 @@ migrate_working_dir/
 /build/
 /coverage/
 
+# Localizations generated from lib/l10n/*.arb on every build — the ARB files
+# are the source of truth, these are not.
+/lib/l10n/generated/
+
 # Symbolication related
 app.*.symbols
 
