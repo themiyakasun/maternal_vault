@@ -5,8 +5,8 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/brand_backdrop.dart';
 import '../../../../core/widgets/brand_logo_mark.dart';
 import '../../../../core/widgets/loading_dots.dart';
+import '../../../../core/widgets/page_intro.dart';
 import '../../../../l10n/generated/app_localizations.dart';
-import '../../../welcome/presentation/widgets/welcome_step_intro.dart';
 import '../../domain/vault_setup_stage.dart';
 import '../widgets/setup_stage_tile.dart';
 
@@ -116,7 +116,7 @@ class _VaultSetupScreenState extends State<VaultSetupScreen> {
                   const Spacer(flex: 2),
                   Center(child: BrandLogoMark(size: compact ? 64 : 80)),
                   const SizedBox(height: AppSpacing.stackLg),
-                  WelcomeStepIntro(
+                  PageIntro(
                     title: l10n.vaultSetupTitle,
                     body: l10n.vaultSetupBody,
                     compact: compact,

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/buttons/app_outline_button.dart';
+import '../../../../core/widgets/buttons/app_primary_button.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import 'welcome_step_dots.dart';
 
@@ -45,23 +46,17 @@ class WelcomeNavBar extends StatelessWidget {
           children: <Widget>[
             if (onBack != null) ...<Widget>[
               Expanded(
-                child: OutlinedButton(
+                child: AppOutlineButton(
+                  label: l10n.actionBack,
                   onPressed: onBack,
-                  child: Text(l10n.actionBack, style: AppTextStyles.button),
                 ),
               ),
               const SizedBox(width: AppSpacing.componentGap),
             ],
             Expanded(
-              // Give the primary action twice the room when Back is present, so
-              // the hierarchy stays obvious.
-              flex: onBack != null ? 2 : 1,
-              child: FilledButton(
+              child: AppPrimaryButton(
+                label: isLastStep ? l10n.actionGetStarted : l10n.actionNext,
                 onPressed: onNext,
-                child: Text(
-                  isLastStep ? l10n.actionGetStarted : l10n.actionNext,
-                  style: AppTextStyles.button,
-                ),
               ),
             ),
           ],

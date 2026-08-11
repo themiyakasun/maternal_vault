@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/page_intro.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../widgets/feature_highlight.dart';
-import '../widgets/welcome_step_intro.dart';
 
 /// Welcome step 2 — what the app is and why it exists.
 class AboutStep extends StatelessWidget {
@@ -20,7 +20,7 @@ class AboutStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          WelcomeStepIntro(
+          PageIntro(
             title: l10n.aboutStepTitle,
             body: l10n.aboutStepBody,
             compact: compact,

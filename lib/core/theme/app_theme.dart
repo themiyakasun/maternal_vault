@@ -35,7 +35,10 @@ abstract final class AppRadii {
 
 /// Nurture Core theme.
 abstract final class AppTheme {
-  static const double _buttonHeight = 52;
+  /// Standard height for the full-width action buttons. Public so the wrappers
+  /// in `core/widgets/buttons` can restate it when they relax `minimumSize` and
+  /// would otherwise lose the theme's height along with it.
+  static const double buttonHeight = 52;
 
   static ColorScheme get colorScheme => const ColorScheme(
         brightness: Brightness.light,
@@ -124,7 +127,7 @@ abstract final class AppTheme {
           foregroundColor: scheme.onPrimary,
           disabledBackgroundColor: scheme.onSurface.withValues(alpha: 0.12),
           disabledForegroundColor: scheme.onSurface.withValues(alpha: 0.38),
-          minimumSize: const Size.fromHeight(_buttonHeight),
+          minimumSize: const Size.fromHeight(buttonHeight),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.stackLg),
           elevation: 0,
           textStyle: AppTextStyles.button,
@@ -136,7 +139,7 @@ abstract final class AppTheme {
       outlinedButtonTheme: OutlinedButtonThemeData(
         style: OutlinedButton.styleFrom(
           foregroundColor: scheme.primary,
-          minimumSize: const Size.fromHeight(_buttonHeight),
+          minimumSize: const Size.fromHeight(buttonHeight),
           padding: const EdgeInsets.symmetric(horizontal: AppSpacing.stackLg),
           textStyle: AppTextStyles.button,
           side: BorderSide(color: scheme.outlineVariant),
@@ -160,7 +163,7 @@ abstract final class AppTheme {
       ),
       filledButtonTheme: FilledButtonThemeData(
         style: FilledButton.styleFrom(
-          minimumSize: const Size.fromHeight(_buttonHeight),
+          minimumSize: const Size.fromHeight(buttonHeight),
           textStyle: AppTextStyles.button,
           shape: const RoundedRectangleBorder(
             borderRadius: AppRadii.cardRadius,

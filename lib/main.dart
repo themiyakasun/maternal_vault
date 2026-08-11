@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/l10n/app_locales.dart';
 import 'core/l10n/locale_controller.dart';
 import 'core/theme/app_theme.dart';
+import 'features/mother/presentation/screens/mother_shell_screen.dart';
 import 'features/mother/presentation/screens/vault_setup_screen.dart';
 import 'features/partner/presentation/screens/connect_mother_record_screen.dart';
 import 'features/splash/presentation/screens/splash_screen.dart';
@@ -89,8 +90,8 @@ class _MaternalVaultAppState extends State<MaternalVaultApp> {
         // way back into it.
         _navigator.pushReplacement(
           VaultSetupScreen.route(
-            // TODO: pass `runStage` once the record and crypto layers land,
-            // and route into the mother's shell from `onComplete`.
+            // TODO: pass `runStage` once the record and crypto layers land.
+            onComplete: _openMotherShell,
           ),
         );
       case UserRole.partner:
@@ -98,5 +99,17 @@ class _MaternalVaultAppState extends State<MaternalVaultApp> {
         // the wrong role should land back on the role step.
         _navigator.push(ConnectMotherRecordScreen.route());
     }
+  }
+
+  /// Replaces setup rather than stacking on it — the vault is built by now and
+  /// there is nothing to return to.
+  void _openMotherShell() {
+    _navigator.pushReplacement(
+      MotherShellScreen.route(
+        onLanguageChanged: (AppLanguage next) => _locale.language = next,
+        // TODO: read `vitals` from the record and pass `onSubmitProfile` once
+        // there is somewhere to store the profile.
+      ),
+    );
   }
 }

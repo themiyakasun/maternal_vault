@@ -54,5 +54,64 @@
   "vaultStageFinishing": "எல்லாவற்றையும் தயார் செய்கிறோம்",
   "vaultStageStatusDone": "முடிந்தது",
   "vaultStageStatusActive": "நடைபெறுகிறது",
-  "vaultStageStatusPending": "காத்திருக்கிறது"
+  "vaultStageStatusPending": "காத்திருக்கிறது",
+
+  "recordTitle": "கர்ப்பப் பதிவு",
+  "actionChangeLanguage": "மொழியை மாற்று",
+  "actionNotifications": "அறிவிப்புகள்",
+
+  "tabProfile": "சுயவிவரம்",
+  "tabHistory": "வரலாறு",
+  "tabObstetric": "மகப்பேறு",
+  "tabClinic": "கிளினிக்",
+  "tabPlan": "திட்டம்",
+  "tabComingSoon": "விரைவில்",
+  "tabComingSoonBody": "உங்கள் பதிவின் இந்தப் பகுதி இன்னும் உருவாக்கப்படுகிறது. நீங்கள் ஏற்கெனவே சேமித்தவை பாதுகாப்பாக இருக்கும்.",
+
+  "profileTitle": "அடிப்படை சுயவிவரம்",
+  "profileBody": "உங்கள் பதிவு விவரங்களும், முதல் கிளினிக் வருகையில் கேட்கப்படும் தகவல்களும்.",
+  "profileSaveNotConnected": "விவரங்கள் சரியாக உள்ளன. ஆனால் பதிவில் சேமிப்பது இன்னும் இணைக்கப்படவில்லை.",
+
+  "vitalsEyebrow": "முக்கிய அளவீடுகள்",
+  "vitalBloodGroup": "இரத்தப் பிரிவு",
+  "vitalBmi": "BMI",
+  "vitalHeight": "உயரம்",
+  "vitalAllergies": "ஒவ்வாமைகள்",
+  "unitCentimetres": "செ.மீ.",
+
+  "sectionDemographics": "மக்கள்தொகை விவரம்",
+  "fieldRegistrationNumber": "பதிவு எண்",
+  "fieldRegistrationNumberHint": "உங்கள் கிளினிக் அட்டையில் அச்சிடப்பட்டுள்ளது போல",
+  "fieldRegistrationDate": "பதிவு செய்த தேதி",
+  "fieldRegistrationDateHint": "ஒரு தேதியைத் தேர்ந்தெடுக்கவும்",
+  "fieldMotherName": "தாயின் பெயர்",
+  "fieldMotherNameHint": "அடையாள அட்டையில் உள்ள முழுப் பெயர்",
+  "fieldNationalId": "தே.அ.அ. எண்",
+  "fieldNationalIdHint": "தேசிய அடையாள அட்டை எண்",
+  "fieldAddress": "முகவரி",
+  "fieldAddressHint": "வீட்டு எண், தெரு, நகரம்",
+  "fieldPhone": "தொலைபேசி எண்",
+  "fieldPhoneHint": "07X XXX XXXX",
+
+  "sectionPersonalInfo": "தனிப்பட்ட தகவல்",
+  "parentMother": "தாய் (மனைவி)",
+  "parentFather": "தந்தை (கணவர்)",
+  "fieldAge": "வயது",
+  "fieldAgeHint": "ஆண்டுகள்",
+  "fieldEducation": "கல்வி நிலை",
+  "fieldEducationHint": "ஒன்றைத் தேர்ந்தெடுக்கவும்",
+  "fieldOccupation": "தொழில்",
+  "fieldOccupationHint": "உ.ம். ஆசிரியர்",
+
+  "educationNone": "முறையான கல்வி இல்லை",
+  "educationPrimary": "ஆரம்பம் (1–5 வகுப்புகள்)",
+  "educationSecondary": "இடைநிலை (6–11 வகுப்புகள்)",
+  "educationOLevel": "சா.தர தேர்ச்சி",
+  "educationALevel": "உ.தர தேர்ச்சி",
+  "educationTertiary": "பட்டம் அல்லது டிப்ளோமா",
+
+  "actionSaveProfile": "சுயவிவரத்தைச் சேமி",
+
+  "validationRequired": "இந்தப் புலம் அவசியம்",
+  "validationAgeRange": "{min} முதல் {max} வரையான வயதை உள்ளிடவும்"
 }

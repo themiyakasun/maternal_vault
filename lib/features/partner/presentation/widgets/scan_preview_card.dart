@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/cards/app_card.dart';
 
 /// The viewfinder placeholder on the partner's connect screen: a sage-framed
 /// square with corner brackets and a QR glyph, plus a status chip straddling
@@ -31,15 +32,14 @@ class ScanPreviewCard extends StatelessWidget {
         children: <Widget>[
           AspectRatio(
             aspectRatio: 1.05,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: AppColors.secondary.withValues(alpha: 0.06),
-                borderRadius: AppRadii.cardRadius,
-                border: Border.all(
-                  color: AppColors.secondaryContainer,
-                  width: 2,
-                ),
-              ),
+            child: AppCard(
+              color: AppColors.secondary.withValues(alpha: 0.06),
+              borderColor: AppColors.secondaryContainer,
+              borderWidth: 2,
+              // Flat and edge-to-edge: this is a viewfinder, not a card lifted
+              // off the page, and the brackets have to reach the corners.
+              boxShadow: const <BoxShadow>[],
+              padding: EdgeInsets.zero,
               child: Stack(
                 children: <Widget>[
                   const Center(
@@ -130,35 +130,29 @@ class _StatusChip extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return DecoratedBox(
-      decoration: const BoxDecoration(
-        color: AppColors.cardSurface,
-        borderRadius: AppRadii.pill,
-        boxShadow: AppColors.shadowCard,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        child: Row(
-          mainAxisSize: MainAxisSize.min,
-          children: <Widget>[
-            Container(
-              width: 6,
-              height: 6,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: AppColors.secondary,
-              ),
+    return AppCard(
+      borderRadius: AppRadii.pill,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: <Widget>[
+          Container(
+            width: 6,
+            height: 6,
+            decoration: const BoxDecoration(
+              shape: BoxShape.circle,
+              color: AppColors.secondary,
             ),
-            const SizedBox(width: AppSpacing.stackSm),
-            Text(
-              label,
-              style: AppTextStyles.labelCaps.copyWith(
-                color: AppColors.onSurface,
-                letterSpacing: 0.2,
-              ),
+          ),
+          const SizedBox(width: AppSpacing.stackSm),
+          Text(
+            label,
+            style: AppTextStyles.labelCaps.copyWith(
+              color: AppColors.onSurface,
+              letterSpacing: 0.2,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

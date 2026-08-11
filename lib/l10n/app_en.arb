@@ -172,5 +172,176 @@
   "vaultStageStatusPending": "Waiting",
   "@vaultStageStatusPending": {
     "description": "Screen-reader value for a setup stage that has not started. Not shown on screen."
+  },
+
+  "recordTitle": "Pregnancy Record",
+  "@recordTitle": {
+    "description": "Title in the mother's app bar, above every tab."
+  },
+  "actionChangeLanguage": "Change language",
+  "@actionChangeLanguage": {
+    "description": "Tooltip and screen-reader label for the globe in the app bar."
+  },
+  "actionNotifications": "Notifications",
+  "@actionNotifications": {
+    "description": "Tooltip and screen-reader label for the bell in the app bar."
+  },
+
+  "tabProfile": "Profile",
+  "@tabProfile": {
+    "description": "Bottom navigation — registration and demographic details."
+  },
+  "tabHistory": "History",
+  "@tabHistory": {
+    "description": "Bottom navigation — past pregnancies and their outcomes."
+  },
+  "tabObstetric": "Obstetric",
+  "@tabObstetric": {
+    "description": "Bottom navigation — the current pregnancy's obstetric record."
+  },
+  "tabClinic": "Clinic",
+  "@tabClinic": {
+    "description": "Bottom navigation — clinic visits and check-up findings."
+  },
+  "tabPlan": "Plan",
+  "@tabPlan": {
+    "description": "Bottom navigation — the birth plan and what to prepare."
+  },
+  "tabComingSoon": "Coming soon",
+  "@tabComingSoon": {
+    "description": "Heading on a tab that has not been built yet."
+  },
+  "tabComingSoonBody": "This part of your record is still being built. Everything you have already saved stays safe.",
+  "@tabComingSoonBody": {
+    "description": "Supporting copy under the coming-soon heading."
+  },
+
+  "profileTitle": "Basic Profile",
+  "@profileTitle": {
+    "description": "Heading of the mother's first tab."
+  },
+  "profileBody": "Your registration details and the information the clinic asks for at your first visit.",
+  "@profileBody": {
+    "description": "Supporting copy under the Basic Profile heading."
+  },
+  "profileSaveNotConnected": "Details look good. Saving to your record is not connected yet.",
+  "@profileSaveNotConnected": {
+    "description": "Shown after a valid Save while no storage layer is wired up. Deliberately does not claim the profile was saved."
+  },
+
+  "vitalsEyebrow": "KEY VITALS",
+  "@vitalsEyebrow": {
+    "description": "Small caps line above the four summary tiles. Set in caps in English; languages without letter case use their normal form."
+  },
+  "vitalBloodGroup": "Blood Group",
+  "@vitalBloodGroup": {
+    "description": "Summary tile label — ABO group and rhesus factor."
+  },
+  "vitalBmi": "BMI",
+  "@vitalBmi": {
+    "description": "Summary tile label — body mass index. Kept as the abbreviation, which is what clinics use."
+  },
+  "vitalHeight": "Height",
+  "@vitalHeight": {
+    "description": "Summary tile label — the mother's height."
+  },
+  "vitalAllergies": "Allergies",
+  "@vitalAllergies": {
+    "description": "Summary tile label — known allergies."
+  },
+  "unitCentimetres": "cm",
+  "@unitCentimetres": {
+    "description": "Abbreviated unit shown after a height value."
+  },
+
+  "sectionDemographics": "Demographics",
+  "@sectionDemographics": {
+    "description": "First section of the profile form — who you are and how the clinic reaches you."
+  },
+  "fieldRegistrationNumber": "Registration No.",
+  "@fieldRegistrationNumber": {},
+  "fieldRegistrationNumberHint": "As printed on your clinic card",
+  "@fieldRegistrationNumberHint": {},
+  "fieldRegistrationDate": "Date of Registration",
+  "@fieldRegistrationDate": {},
+  "fieldRegistrationDateHint": "Choose a date",
+  "@fieldRegistrationDateHint": {},
+  "fieldMotherName": "Mother's Name",
+  "@fieldMotherName": {},
+  "fieldMotherNameHint": "Full name as on your ID",
+  "@fieldMotherNameHint": {},
+  "fieldNationalId": "NIC / ID Number",
+  "@fieldNationalId": {},
+  "fieldNationalIdHint": "National identity card number",
+  "@fieldNationalIdHint": {},
+  "fieldAddress": "Address",
+  "@fieldAddress": {},
+  "fieldAddressHint": "House number, street, city",
+  "@fieldAddressHint": {},
+  "fieldPhone": "Phone Number",
+  "@fieldPhone": {},
+  "fieldPhoneHint": "07X XXX XXXX",
+  "@fieldPhoneHint": {
+    "description": "Placeholder showing the shape of a Sri Lankan mobile number."
+  },
+
+  "sectionPersonalInfo": "Personal Information",
+  "@sectionPersonalInfo": {
+    "description": "Second section of the profile form — both parents' age, schooling and work."
+  },
+  "parentMother": "Mother (Wife)",
+  "@parentMother": {
+    "description": "Heading of the first sub-block in Personal Information."
+  },
+  "parentFather": "Father (Husband)",
+  "@parentFather": {
+    "description": "Heading of the second sub-block in Personal Information."
+  },
+  "fieldAge": "Age",
+  "@fieldAge": {},
+  "fieldAgeHint": "Years",
+  "@fieldAgeHint": {},
+  "fieldEducation": "Education Level",
+  "@fieldEducation": {},
+  "fieldEducationHint": "Choose one",
+  "@fieldEducationHint": {},
+  "fieldOccupation": "Occupation",
+  "@fieldOccupation": {},
+  "fieldOccupationHint": "e.g. Teacher",
+  "@fieldOccupationHint": {},
+
+  "educationNone": "No formal schooling",
+  "@educationNone": {},
+  "educationPrimary": "Primary (Grades 1–5)",
+  "@educationPrimary": {},
+  "educationSecondary": "Secondary (Grades 6–11)",
+  "@educationSecondary": {},
+  "educationOLevel": "O/L qualified",
+  "@educationOLevel": {
+    "description": "Passed the Ordinary Level examination."
+  },
+  "educationALevel": "A/L qualified",
+  "@educationALevel": {
+    "description": "Passed the Advanced Level examination."
+  },
+  "educationTertiary": "Degree or diploma",
+  "@educationTertiary": {},
+
+  "actionSaveProfile": "Save Profile",
+  "@actionSaveProfile": {
+    "description": "Primary button at the foot of the profile form."
+  },
+
+  "validationRequired": "This field is required",
+  "@validationRequired": {
+    "description": "Shown under a field that must be filled in."
+  },
+  "validationAgeRange": "Enter an age between {min} and {max}",
+  "@validationAgeRange": {
+    "description": "Shown under an age field holding something non-numeric or implausible.",
+    "placeholders": {
+      "min": { "type": "int", "example": "12" },
+      "max": { "type": "int", "example": "70" }
+    }
   }
 }

@@ -2,10 +2,10 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/page_intro.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../domain/user_role.dart';
 import '../widgets/role_card.dart';
-import '../widgets/welcome_step_intro.dart';
 
 /// Welcome step 3 — pick a role, which decides the shell the app opens into.
 class RoleStep extends StatelessWidget {
@@ -30,7 +30,7 @@ class RoleStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          WelcomeStepIntro(
+          PageIntro(
             title: l10n.roleStepTitle,
             body: l10n.roleStepBody,
             compact: compact,

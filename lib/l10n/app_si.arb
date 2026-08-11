@@ -54,5 +54,64 @@
   "vaultStageFinishing": "සියල්ල සූදානම් වෙමින්",
   "vaultStageStatusDone": "අවසන්",
   "vaultStageStatusActive": "ක්‍රියාත්මකයි",
-  "vaultStageStatusPending": "රැඳී සිටිමින්"
+  "vaultStageStatusPending": "රැඳී සිටිමින්",
+
+  "recordTitle": "ගැබ්බර වාර්තාව",
+  "actionChangeLanguage": "භාෂාව වෙනස් කරන්න",
+  "actionNotifications": "දැනුම්දීම්",
+
+  "tabProfile": "පැතිකඩ",
+  "tabHistory": "ඉතිහාසය",
+  "tabObstetric": "ප්‍රසව",
+  "tabClinic": "සායනය",
+  "tabPlan": "සැලසුම",
+  "tabComingSoon": "ඉක්මනින්",
+  "tabComingSoonBody": "ඔබේ වාර්තාවේ මෙම කොටස තවමත් සකස් වෙමින් පවතී. ඔබ දැනටමත් සුරකින ලද සියල්ල ආරක්ෂිතව පවතී.",
+
+  "profileTitle": "මූලික පැතිකඩ",
+  "profileBody": "ඔබේ ලියාපදිංචි විස්තර සහ පළමු සායන පැමිණීමේදී අවශ්‍ය වන තොරතුරු.",
+  "profileSaveNotConnected": "විස්තර නිවැරදිය. නමුත් වාර්තාවට සුරැකීම තවම සම්බන්ධ කර නොමැත.",
+
+  "vitalsEyebrow": "ප්‍රධාන මිනුම්",
+  "vitalBloodGroup": "රුධිර වර්ගය",
+  "vitalBmi": "BMI",
+  "vitalHeight": "උස",
+  "vitalAllergies": "ආසාත්මිකතා",
+  "unitCentimetres": "සෙ.මී.",
+
+  "sectionDemographics": "ජන විස්තර",
+  "fieldRegistrationNumber": "ලියාපදිංචි අංකය",
+  "fieldRegistrationNumberHint": "ඔබේ සායන කාඩ්පතේ මුද්‍රිත පරිදි",
+  "fieldRegistrationDate": "ලියාපදිංචි වූ දිනය",
+  "fieldRegistrationDateHint": "දිනයක් තෝරන්න",
+  "fieldMotherName": "මවගේ නම",
+  "fieldMotherNameHint": "හැඳුනුම්පතේ ඇති සම්පූර්ණ නම",
+  "fieldNationalId": "ජා.හැ. අංකය",
+  "fieldNationalIdHint": "ජාතික හැඳුනුම්පත් අංකය",
+  "fieldAddress": "ලිපිනය",
+  "fieldAddressHint": "නිවසේ අංකය, පාර, නගරය",
+  "fieldPhone": "දුරකථන අංකය",
+  "fieldPhoneHint": "07X XXX XXXX",
+
+  "sectionPersonalInfo": "පෞද්ගලික තොරතුරු",
+  "parentMother": "මව (බිරිඳ)",
+  "parentFather": "පියා (සැමියා)",
+  "fieldAge": "වයස",
+  "fieldAgeHint": "අවුරුදු",
+  "fieldEducation": "අධ්‍යාපන මට්ටම",
+  "fieldEducationHint": "එකක් තෝරන්න",
+  "fieldOccupation": "රැකියාව",
+  "fieldOccupationHint": "උදා. ගුරුවරයෙක්",
+
+  "educationNone": "විධිමත් අධ්‍යාපනයක් නොමැත",
+  "educationPrimary": "ප්‍රාථමික (1–5 ශ්‍රේණි)",
+  "educationSecondary": "ද්විතීයික (6–11 ශ්‍රේණි)",
+  "educationOLevel": "සා.පෙ. සමත්",
+  "educationALevel": "උ.පෙ. සමත්",
+  "educationTertiary": "උපාධියක් හෝ ඩිප්ලෝමාවක්",
+
+  "actionSaveProfile": "පැතිකඩ සුරකින්න",
+
+  "validationRequired": "මෙම ක්ෂේත්‍රය අවශ්‍යයි",
+  "validationAgeRange": "වයස {min} සහ {max} අතර ඇතුළත් කරන්න"
 }

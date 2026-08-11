@@ -3,8 +3,11 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/brand_backdrop.dart';
+import '../../../../core/widgets/buttons/app_button_tone.dart';
+import '../../../../core/widgets/buttons/app_outline_button.dart';
+import '../../../../core/widgets/buttons/app_primary_button.dart';
+import '../../../../core/widgets/page_intro.dart';
 import '../../../../l10n/generated/app_localizations.dart';
-import '../../../welcome/presentation/widgets/welcome_step_intro.dart';
 import '../widgets/scan_preview_card.dart';
 
 /// Where the partner lands after onboarding: pair this phone with the mother's
@@ -70,7 +73,7 @@ class ConnectMotherRecordScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: <Widget>[
-                        WelcomeStepIntro(
+                        PageIntro(
                           title: l10n.partnerConnectTitle,
                           body: l10n.partnerConnectBody,
                           compact: compact,
@@ -83,19 +86,17 @@ class ConnectMotherRecordScreen extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: AppSpacing.sectionGap),
-                FilledButton.icon(
+                AppPrimaryButton(
+                  label: l10n.partnerActionScanNow,
                   onPressed: onScanNow,
-                  icon: const Icon(Icons.qr_code_scanner_rounded, size: 20),
-                  label: Text(l10n.partnerActionScanNow),
-                  style: FilledButton.styleFrom(
-                    backgroundColor: AppColors.secondary,
-                    foregroundColor: AppColors.onSecondary,
-                  ),
+                  tone: AppButtonTone.secondary,
+                  icon: Icons.qr_code_scanner_rounded,
                 ),
                 const SizedBox(height: AppSpacing.componentGap),
-                OutlinedButton(
+                AppOutlineButton(
+                  label: l10n.partnerActionEnterCode,
                   onPressed: onEnterCode,
-                  child: Text(l10n.partnerActionEnterCode),
+                  tone: AppButtonTone.secondary,
                 ),
                 const SizedBox(height: AppSpacing.sectionGap),
               ],

@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../../../core/l10n/app_locales.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/widgets/page_intro.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../widgets/language_option_tile.dart';
-import '../widgets/welcome_step_intro.dart';
 
 /// Welcome step 1 — pick the app's language.
 ///
@@ -44,7 +44,7 @@ class LanguageStep extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          WelcomeStepIntro(
+          PageIntro(
             title: l10n.languageStepTitle,
             body: l10n.languageStepBody,
             compact: compact,
