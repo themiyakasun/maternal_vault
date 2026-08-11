@@ -4,6 +4,7 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/l10n/app_locales.dart';
 import 'core/l10n/locale_controller.dart';
 import 'core/theme/app_theme.dart';
+import 'features/mother/domain/obstetric_history.dart';
 import 'features/mother/presentation/screens/mother_shell_screen.dart';
 import 'features/mother/presentation/screens/vault_setup_screen.dart';
 import 'features/partner/presentation/screens/connect_mother_record_screen.dart';
@@ -107,6 +108,9 @@ class _MaternalVaultAppState extends State<MaternalVaultApp> {
     _navigator.pushReplacement(
       MotherShellScreen.route(
         onLanguageChanged: (AppLanguage next) => _locale.language = next,
+        // Demo data until there is a record to read — see
+        // ObstetricHistory.sample.
+        obstetric: const ObstetricHistory.sample(),
         // TODO: read `vitals` from the record and pass `onSubmitProfile` once
         // there is somewhere to store the profile.
       ),

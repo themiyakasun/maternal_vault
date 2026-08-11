@@ -6,23 +6,32 @@ import '../../../../core/widgets/brand_backdrop.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../domain/basic_profile.dart';
 import '../../domain/key_vitals.dart';
+import '../../domain/medical_history.dart';
 import '../../domain/mother_tab.dart';
+import '../../domain/obstetric_history.dart';
 import '../widgets/language_sheet.dart';
 import '../widgets/pregnancy_record_app_bar.dart';
 import '../widgets/tab_placeholder.dart';
 import 'basic_profile_screen.dart';
+import 'medical_history_screen.dart';
+import 'obstetric_history_screen.dart';
 
 /// The mother's app once setup is done: one header, five sections, one bottom
 /// bar.
 ///
-/// Only [MotherTab.profile] is built; the rest render [TabPlaceholder] so the
-/// bar is fully navigable while those sections are still being designed.
+/// [MotherTab.profile], [MotherTab.history] and [MotherTab.obstetric] are built;
+/// the rest render [TabPlaceholder] so the bar is fully navigable while those
+/// sections are still being designed.
 class MotherShellScreen extends StatefulWidget {
   const MotherShellScreen({
     super.key,
     required this.onLanguageChanged,
     this.vitals = const KeyVitals.empty(),
+    this.history = const MedicalHistory.empty(),
+    this.obstetric = const ObstetricHistory.empty(),
     this.onSubmitProfile,
+    this.onChangeHistory,
+    this.onChangeObstetric,
     this.initialTab = MotherTab.profile,
   });
 
@@ -33,8 +42,20 @@ class MotherShellScreen extends StatefulWidget {
   /// Passed through to [BasicProfileScreen].
   final KeyVitals vitals;
 
+  /// Passed through to [MedicalHistoryScreen].
+  final MedicalHistory history;
+
+  /// Passed through to [ObstetricHistoryScreen].
+  final ObstetricHistory obstetric;
+
   /// Passed through to [BasicProfileScreen.onSubmit].
   final ValueChanged<BasicProfile>? onSubmitProfile;
+
+  /// Passed through to [MedicalHistoryScreen.onChanged].
+  final ValueChanged<MedicalHistory>? onChangeHistory;
+
+  /// Passed through to [ObstetricHistoryScreen.onChanged].
+  final ValueChanged<ObstetricHistory>? onChangeObstetric;
 
   /// Which section to open on. A param so a notification or a deep link can
   /// land somewhere other than Profile later.
@@ -45,7 +66,11 @@ class MotherShellScreen extends StatefulWidget {
   static Route<void> route({
     required ValueChanged<AppLanguage> onLanguageChanged,
     KeyVitals vitals = const KeyVitals.empty(),
+    MedicalHistory history = const MedicalHistory.empty(),
+    ObstetricHistory obstetric = const ObstetricHistory.empty(),
     ValueChanged<BasicProfile>? onSubmitProfile,
+    ValueChanged<MedicalHistory>? onChangeHistory,
+    ValueChanged<ObstetricHistory>? onChangeObstetric,
   }) {
     return PageRouteBuilder<void>(
       transitionDuration: const Duration(milliseconds: 450),
@@ -53,7 +78,11 @@ class MotherShellScreen extends StatefulWidget {
       pageBuilder: (BuildContext context, _, _) => MotherShellScreen(
         onLanguageChanged: onLanguageChanged,
         vitals: vitals,
+        history: history,
+        obstetric: obstetric,
         onSubmitProfile: onSubmitProfile,
+        onChangeHistory: onChangeHistory,
+        onChangeObstetric: onChangeObstetric,
       ),
       transitionsBuilder:
           (BuildContext context, Animation<double> animation, _, Widget child) {
@@ -85,7 +114,10 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
             bottom: false,
             child: Column(
               children: <Widget>[
-                PregnancyRecordAppBar(onChangeLanguage: _changeLanguage),
+                PregnancyRecordAppBar(
+                  title: _headerTitle(l10n, _tab),
+                  onChangeLanguage: _changeLanguage,
+                ),
                 Expanded(
                   // IndexedStack rather than a swap: every tab stays mounted, so
                   // a half-filled form and a scroll position both survive a trip
@@ -127,7 +159,15 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
           onSubmit: widget.onSubmitProfile,
         );
       case MotherTab.history:
+        return MedicalHistoryScreen(
+          history: widget.history,
+          onChanged: widget.onChangeHistory,
+        );
       case MotherTab.obstetric:
+        return ObstetricHistoryScreen(
+          history: widget.obstetric,
+          onChanged: widget.onChangeObstetric,
+        );
       case MotherTab.clinic:
       case MotherTab.plan:
         return TabPlaceholder(
@@ -150,6 +190,25 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
     // Null means the sheet was dismissed without a choice.
     if (picked == null) return;
     widget.onLanguageChanged(picked);
+  }
+
+  /// What the header reads on a given tab.
+  ///
+  /// A section that carries no title of its own names itself up there — one
+  /// heading, not none and not two. The sections that head their own page keep
+  /// the record's name, so Profile still reads "Pregnancy Record" above "Basic
+  /// Profile".
+  String _headerTitle(AppLocalizations l10n, MotherTab tab) {
+    switch (tab) {
+      case MotherTab.history:
+        return l10n.historyTitle;
+      case MotherTab.obstetric:
+        return l10n.obstetricTitle;
+      case MotherTab.profile:
+      case MotherTab.clinic:
+      case MotherTab.plan:
+        return l10n.recordTitle;
+    }
   }
 
   String _label(AppLocalizations l10n, MotherTab tab) {

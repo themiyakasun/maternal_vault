@@ -113,5 +113,83 @@
   "actionSaveProfile": "පැතිකඩ සුරකින්න",
 
   "validationRequired": "මෙම ක්ෂේත්‍රය අවශ්‍යයි",
-  "validationAgeRange": "වයස {min} සහ {max} අතර ඇතුළත් කරන්න"
+  "validationAgeRange": "වයස {min} සහ {max} අතර ඇතුළත් කරන්න",
+
+  "historyTitle": "වෛද්‍ය ඉතිහාසය",
+  "historyBody": "ඔබේ පවුලේ පවතින රෝග සහ ඔබට මෙතෙක් ලැබී ඇති ප්‍රතිකාර.",
+
+  "sectionFamilyHistory": "පවුලේ ඉතිහාසය",
+  "familyDiabetesMellitus": "දියවැඩියාව",
+  "familyHypertension": "අධි රුධිර පීඩනය",
+  "familyHaematological": "රුධිර සම්බන්ධ රෝග",
+
+  "sectionMedicalSurgicalHistory": "වෛද්‍ය / සැත්කම් ඉතිහාසය",
+  "conditionDiabetes": "දියවැඩියාව",
+  "conditionHypertension": "අධි රුධිර පීඩනය",
+  "conditionCardiac": "හෘද රෝග",
+  "conditionRenal": "වකුගඩු රෝග",
+  "conditionHepatic": "අක්මා රෝග",
+  "conditionSurgeries": "සැත්කම්",
+
+  "obstetricTitle": "ප්‍රසව ඉතිහාසය",
+
+  "sectionCurrentHistory": "වත්මන් ඉතිහාසය",
+  "fieldGravidity": "ගැබ් ගණන",
+  "fieldLivingChildren": "ජීවත් වන දරුවන්",
+
+  "sectionScreening": "පරීක්ෂණ සහ ඉතිහාසය",
+  "screeningConsanguinity": "ලේ නෑදෑකම",
+  "screeningRubella": "රුබෙල්ලා එන්නත",
+  "screeningPrePregnancy": "ගැබ් ගැනීමට පෙර පරීක්ෂණ",
+  "screeningFolicAcid": "ෆෝලික් අම්ලය ලබා ගනී",
+  "screeningSubfertility": "ගැබ් ගැනීමේ අපහසුතා ඉතිහාසය",
+
+  "sectionKeyDates": "ප්‍රධාන දින",
+  "hintPickDate": "දිනයක් තෝරන්න",
+  "fieldLrmp": "අවසන් ඔසප් දිනය",
+  "fieldEdd": "අපේක්ෂිත ප්‍රසූත දිනය",
+  "fieldUltrasoundEdd": "ස්කෑන් අනුව නිවැරදි කළ දිනය",
+  "fieldQuickening": "දරු චලනය දැනුණු දිනය",
+
+  "sectionPastObstetric": "පෙර ප්‍රසව ඉතිහාසය",
+  "actionAdd": "එකතු කරන්න",
+  "pastPregnancyEmpty": "පෙර ගැබ් ගැනීම් තවම සටහන් කර නැත.",
+  "pregnancyOrder": "ගැබ් ගැනීම G{order}",
+
+  "fieldDeliveryMode": "ප්‍රසූත ක්‍රමය",
+  "fieldOutcome": "ප්‍රතිඵලය",
+  "fieldBirthWeight": "උපන් බර",
+  "fieldSexAge": "ස්ත්‍රී/පුරුෂ භාවය / වයස",
+  "unitKilograms": "කි.ග්‍රෑ.",
+  "ageInYears": "අවුරුදු {years}",
+
+  "deliverySvd": "සාමාන්‍ය ප්‍රසූතිය",
+  "deliveryAssisted": "උපකරණ සහිත ප්‍රසූතිය",
+  "deliveryCaesarean": "සිසේරියන් සැත්කම",
+
+  "outcomeAlive": "ජීවතුන් අතර",
+  "outcomeStillbirth": "මළ දරු උපත",
+  "outcomeNeonatalDeath": "නවජාත මරණය",
+  "outcomeMiscarriage": "ගබ්සාව",
+
+  "termPreterm": "නොමේරූ",
+  "termTerm": "පූර්ණ කාලීන",
+  "termPostTerm": "කාලය ඉක්මවූ",
+
+  "sexMale": "පිරිමි",
+  "sexFemale": "ගැහැණු",
+
+  "pastPregnancyAddTitle": "පෙර ගැබ් ගැනීමක් එකතු කරන්න",
+  "fieldYear": "ප්‍රසූත වර්ෂය",
+  "fieldYearHint": "උදා. 2020",
+  "fieldBirthWeightHint": "උදා. 3.2",
+  "fieldTerm": "ගැබ් කාලය",
+  "fieldSex": "ස්ත්‍රී පුරුෂ භාවය",
+  "fieldChildAge": "දරුවාගේ වර්තමාන වයස",
+  "hintChooseOne": "එකක් තෝරන්න",
+  "actionCancel": "අවලංගු කරන්න",
+  "actionSave": "සුරකින්න",
+
+  "validationYearRange": "{min} සහ {max} අතර වර්ෂයක් ඇතුළත් කරන්න",
+  "validationWeightRange": "බර කිලෝග්‍රෑම් වලින් ඇතුළත් කරන්න, උදා. 3.2"
 }

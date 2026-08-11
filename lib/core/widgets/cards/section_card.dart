@@ -16,6 +16,7 @@ class SectionCard extends StatelessWidget {
     required this.accent,
     required this.children,
     this.gap = AppSpacing.componentGap,
+    this.divided = false,
   });
 
   final IconData icon;
@@ -30,6 +31,11 @@ class SectionCard extends StatelessWidget {
   /// Vertical space between [children]. Inserted by the card so callers do not
   /// have to thread a [SizedBox] between every field.
   final double gap;
+
+  /// Draws a hairline between [children] instead of plain space. For a run of
+  /// short rows — checkboxes, switches — where an unbroken column is hard to
+  /// scan; leave false for fields, which already separate themselves.
+  final bool divided;
 
   @override
   Widget build(BuildContext context) {
@@ -56,9 +62,11 @@ class SectionCard extends StatelessWidget {
               Expanded(child: Text(title, style: AppTextStyles.h3)),
             ],
           ),
-          for (final Widget child in children) ...<Widget>[
-            SizedBox(height: gap),
-            child,
+          for (int i = 0; i < children.length; i++) ...<Widget>[
+            // The header always gets plain space; only the gaps between children
+            // become rules, so the title is not underlined.
+            if (i > 0 && divided) const Divider() else SizedBox(height: gap),
+            children[i],
           ],
         ],
       ),

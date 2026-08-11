@@ -113,5 +113,83 @@
   "actionSaveProfile": "சுயவிவரத்தைச் சேமி",
 
   "validationRequired": "இந்தப் புலம் அவசியம்",
-  "validationAgeRange": "{min} முதல் {max} வரையான வயதை உள்ளிடவும்"
+  "validationAgeRange": "{min} முதல் {max} வரையான வயதை உள்ளிடவும்",
+
+  "historyTitle": "மருத்துவ வரலாறு",
+  "historyBody": "உங்கள் குடும்பத்தில் உள்ள நோய்களும், உங்களுக்கு அளிக்கப்பட்ட சிகிச்சைகளும்.",
+
+  "sectionFamilyHistory": "குடும்ப வரலாறு",
+  "familyDiabetesMellitus": "நீரிழிவு நோய்",
+  "familyHypertension": "உயர் இரத்த அழுத்தம்",
+  "familyHaematological": "இரத்தம் சார்ந்த நோய்கள்",
+
+  "sectionMedicalSurgicalHistory": "மருத்துவ / அறுவை வரலாறு",
+  "conditionDiabetes": "நீரிழிவு",
+  "conditionHypertension": "உயர் இரத்த அழுத்தம்",
+  "conditionCardiac": "இதய நோய்கள்",
+  "conditionRenal": "சிறுநீரக நோய்கள்",
+  "conditionHepatic": "கல்லீரல் நோய்கள்",
+  "conditionSurgeries": "அறுவை சிகிச்சைகள்",
+
+  "obstetricTitle": "மகப்பேறு வரலாறு",
+
+  "sectionCurrentHistory": "தற்போதைய வரலாறு",
+  "fieldGravidity": "கர்ப்பங்களின் எண்ணிக்கை",
+  "fieldLivingChildren": "வாழும் குழந்தைகள்",
+
+  "sectionScreening": "பரிசோதனை & வரலாறு",
+  "screeningConsanguinity": "இரத்த உறவு",
+  "screeningRubella": "ரூபெல்லா தடுப்பூசி",
+  "screeningPrePregnancy": "கர்ப்பத்திற்கு முந்தைய பரிசோதனை",
+  "screeningFolicAcid": "ஃபோலிக் அமிலம் எடுக்கிறார்",
+  "screeningSubfertility": "கருத்தரிப்பில் சிரமம் இருந்த வரலாறு",
+
+  "sectionKeyDates": "முக்கிய தேதிகள்",
+  "hintPickDate": "ஒரு தேதியைத் தேர்ந்தெடுக்கவும்",
+  "fieldLrmp": "கடைசி மாதவிடாய் தேதி",
+  "fieldEdd": "எதிர்பார்க்கும் பிரசவ தேதி",
+  "fieldUltrasoundEdd": "ஸ்கேன் மூலம் திருத்தப்பட்ட தேதி",
+  "fieldQuickening": "குழந்தை அசைவு உணர்ந்த தேதி",
+
+  "sectionPastObstetric": "முந்தைய மகப்பேறு வரலாறு",
+  "actionAdd": "சேர்",
+  "pastPregnancyEmpty": "முந்தைய கர்ப்பங்கள் இன்னும் பதிவு செய்யப்படவில்லை.",
+  "pregnancyOrder": "கர்ப்பம் G{order}",
+
+  "fieldDeliveryMode": "பிரசவ முறை",
+  "fieldOutcome": "விளைவு",
+  "fieldBirthWeight": "பிறப்பு எடை",
+  "fieldSexAge": "பாலினம் / வயது",
+  "unitKilograms": "கி.கி.",
+  "ageInYears": "{years} வயது",
+
+  "deliverySvd": "இயற்கை பிரசவம்",
+  "deliveryAssisted": "கருவி உதவி பிரசவம்",
+  "deliveryCaesarean": "சிசேரியன்",
+
+  "outcomeAlive": "உயிருடன்",
+  "outcomeStillbirth": "இறந்த பிறப்பு",
+  "outcomeNeonatalDeath": "பிறந்த குழந்தை இறப்பு",
+  "outcomeMiscarriage": "கருச்சிதைவு",
+
+  "termPreterm": "முன்கூட்டிய பிறப்பு",
+  "termTerm": "முழு கால",
+  "termPostTerm": "காலம் கடந்த",
+
+  "sexMale": "ஆண்",
+  "sexFemale": "பெண்",
+
+  "pastPregnancyAddTitle": "முந்தைய கர்ப்பத்தைச் சேர்க்கவும்",
+  "fieldYear": "பிரசவ ஆண்டு",
+  "fieldYearHint": "உ.ம். 2020",
+  "fieldBirthWeightHint": "உ.ம். 3.2",
+  "fieldTerm": "கர்ப்ப காலம்",
+  "fieldSex": "பாலினம்",
+  "fieldChildAge": "குழந்தையின் தற்போதைய வயது",
+  "hintChooseOne": "ஒன்றைத் தேர்ந்தெடுக்கவும்",
+  "actionCancel": "ரத்து செய்",
+  "actionSave": "சேமி",
+
+  "validationYearRange": "{min} முதல் {max} வரையான ஆண்டை உள்ளிடவும்",
+  "validationWeightRange": "எடையை கிலோகிராமில் உள்ளிடவும், உ.ம். 3.2"
 }

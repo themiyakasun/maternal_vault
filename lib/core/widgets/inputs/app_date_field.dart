@@ -26,6 +26,7 @@ class AppDateField extends StatelessWidget {
     this.enabled = true,
     this.firstDate,
     this.lastDate,
+    this.icon,
   });
 
   /// Caption shown above the field.
@@ -53,6 +54,10 @@ class AppDateField extends StatelessWidget {
   /// date.
   final DateTime? lastDate;
 
+  /// Optional glyph inside the leading edge of the field. For a screen with
+  /// several dates in a row, where the labels alone take a moment to tell apart.
+  final IconData? icon;
+
   @override
   Widget build(BuildContext context) {
     final MaterialLocalizations material = MaterialLocalizations.of(context);
@@ -71,6 +76,13 @@ class AppDateField extends StatelessWidget {
             borderRadius: AppRadii.cardRadius,
             child: InputDecorator(
               decoration: appFieldDecoration(
+                prefixIcon: icon == null
+                    ? null
+                    : Icon(
+                        icon,
+                        size: 20,
+                        color: AppColors.onSurfaceVariant,
+                      ),
                 suffixIcon: const Icon(
                   Icons.calendar_today_rounded,
                   size: 20,

@@ -6,7 +6,7 @@ import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/brand_logo_mark.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 
-/// The header above every tab of the mother's record: the mark, the record's
+/// The header above every tab of the mother's record: the mark, the section's
 /// name, then language and notifications.
 ///
 /// A plain widget rather than an [AppBar]: the shell paints a gradient behind
@@ -15,9 +15,15 @@ import '../../../../l10n/generated/app_localizations.dart';
 class PregnancyRecordAppBar extends StatelessWidget {
   const PregnancyRecordAppBar({
     super.key,
+    required this.title,
     required this.onChangeLanguage,
     this.onOpenNotifications,
   });
+
+  /// What section you are in. Supplied by the shell rather than fixed here, so a
+  /// tab that carries its own heading — Medical History — says so in the header
+  /// instead of repeating the record's name.
+  final String title;
 
   /// Opens the language sheet.
   final VoidCallback onChangeLanguage;
@@ -41,7 +47,7 @@ class PregnancyRecordAppBar extends StatelessWidget {
           const SizedBox(width: AppSpacing.stackMd),
           Expanded(
             child: Text(
-              l10n.recordTitle,
+              title,
               style: AppTextStyles.h3,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,

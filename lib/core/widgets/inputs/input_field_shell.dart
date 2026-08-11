@@ -49,11 +49,13 @@ InputDecoration appFieldDecoration({
   String? hint,
   String? suffixText,
   Widget? suffixIcon,
+  Widget? prefixIcon,
 }) {
   return InputDecoration(
     hintText: hint,
     suffixText: suffixText,
     suffixIcon: suffixIcon,
+    prefixIcon: prefixIcon,
     fillColor: AppColors.surface,
     counterText: '',
   );

@@ -343,5 +343,229 @@
       "min": { "type": "int", "example": "12" },
       "max": { "type": "int", "example": "70" }
     }
-  }
+  },
+
+  "historyTitle": "Medical History",
+  "@historyTitle": {
+    "description": "Title of the History tab."
+  },
+  "historyBody": "What runs in your family, and what you have been treated for.",
+  "@historyBody": {
+    "description": "Supporting line under the History tab title."
+  },
+
+  "sectionFamilyHistory": "Family History",
+  "@sectionFamilyHistory": {
+    "description": "Card of conditions the mother's blood relatives have had."
+  },
+  "familyDiabetesMellitus": "Diabetes Mellitus",
+  "@familyDiabetesMellitus": {},
+  "familyHypertension": "Hypertension",
+  "@familyHypertension": {},
+  "familyHaematological": "Haematological diseases",
+  "@familyHaematological": {
+    "description": "Blood disorders in the family — thalassaemia, sickle cell, clotting disorders."
+  },
+
+  "sectionMedicalSurgicalHistory": "Medical/Surgical History",
+  "@sectionMedicalSurgicalHistory": {
+    "description": "Card of conditions the mother herself has been diagnosed with or treated for."
+  },
+  "conditionDiabetes": "Diabetes",
+  "@conditionDiabetes": {},
+  "conditionHypertension": "Hypertension",
+  "@conditionHypertension": {},
+  "conditionCardiac": "Cardiac Diseases",
+  "@conditionCardiac": {},
+  "conditionRenal": "Renal Diseases",
+  "@conditionRenal": {
+    "description": "Kidney disease."
+  },
+  "conditionHepatic": "Hepatic Diseases",
+  "@conditionHepatic": {
+    "description": "Liver disease."
+  },
+  "conditionSurgeries": "Surgeries",
+  "@conditionSurgeries": {
+    "description": "Any past operation."
+  },
+
+  "obstetricTitle": "Obstetric History",
+  "@obstetricTitle": {
+    "description": "Title of the Obstetric tab."
+  },
+
+  "sectionCurrentHistory": "Current History",
+  "@sectionCurrentHistory": {
+    "description": "Heading over the counts for this pregnancy."
+  },
+  "fieldGravidity": "Gravidity",
+  "@fieldGravidity": {
+    "description": "Total number of pregnancies including the current one."
+  },
+  "fieldLivingChildren": "Living Children",
+  "@fieldLivingChildren": {},
+
+  "sectionScreening": "Screening & History",
+  "@sectionScreening": {
+    "description": "Heading over the yes/no questions asked at the booking visit."
+  },
+  "screeningConsanguinity": "Consanguinity",
+  "@screeningConsanguinity": {
+    "description": "Whether the parents are blood relatives."
+  },
+  "screeningRubella": "Rubella Immunization",
+  "@screeningRubella": {},
+  "screeningPrePregnancy": "Pre-pregnancy screening",
+  "@screeningPrePregnancy": {},
+  "screeningFolicAcid": "On folic acid",
+  "@screeningFolicAcid": {},
+  "screeningSubfertility": "History of subfertility",
+  "@screeningSubfertility": {
+    "description": "Difficulty conceiving in the past."
+  },
+
+  "sectionKeyDates": "Key Dates",
+  "@sectionKeyDates": {
+    "description": "Heading over the four dates this pregnancy is calculated from."
+  },
+  "hintPickDate": "Pick a date",
+  "@hintPickDate": {
+    "description": "Placeholder in any date field with nothing chosen yet."
+  },
+  "fieldLrmp": "LRMP",
+  "@fieldLrmp": {
+    "description": "Last regular menstrual period. Keep the local clinical abbreviation if there is one."
+  },
+  "fieldEdd": "EDD",
+  "@fieldEdd": {
+    "description": "Expected date of delivery. Keep the local clinical abbreviation if there is one."
+  },
+  "fieldUltrasoundEdd": "US corrected EDD",
+  "@fieldUltrasoundEdd": {
+    "description": "Expected date of delivery as corrected by a dating scan."
+  },
+  "fieldQuickening": "Date of Quickening",
+  "@fieldQuickening": {
+    "description": "When the mother first felt the baby move."
+  },
+
+  "sectionPastObstetric": "Past Obstetric History",
+  "@sectionPastObstetric": {
+    "description": "Heading over the list of earlier pregnancies."
+  },
+  "actionAdd": "Add",
+  "@actionAdd": {
+    "description": "Text button beside a heading that adds an entry to the list under it."
+  },
+  "pastPregnancyEmpty": "No earlier pregnancies recorded yet.",
+  "@pastPregnancyEmpty": {
+    "description": "Shown in place of the list when nothing has been added."
+  },
+  "pregnancyOrder": "Pregnancy G{order}",
+  "@pregnancyOrder": {
+    "description": "Title of one past pregnancy card. G is the obstetric gravida number.",
+    "placeholders": {
+      "order": { "type": "int", "example": "1" }
+    }
+  },
+
+  "fieldDeliveryMode": "Delivery Mode",
+  "@fieldDeliveryMode": {},
+  "fieldOutcome": "Outcome",
+  "@fieldOutcome": {},
+  "fieldBirthWeight": "Birth Weight",
+  "@fieldBirthWeight": {},
+  "fieldSexAge": "Sex / Age",
+  "@fieldSexAge": {
+    "description": "One column holding the child's sex and current age."
+  },
+  "unitKilograms": "kg",
+  "@unitKilograms": {},
+  "ageInYears": "{years} yrs",
+  "@ageInYears": {
+    "description": "A child's current age.",
+    "placeholders": {
+      "years": { "type": "int", "example": "4" }
+    }
+  },
+
+  "deliverySvd": "SVD",
+  "@deliverySvd": {
+    "description": "Spontaneous vaginal delivery. Keep the local clinical abbreviation if there is one."
+  },
+  "deliveryAssisted": "Assisted vaginal",
+  "@deliveryAssisted": {
+    "description": "Forceps or vacuum delivery."
+  },
+  "deliveryCaesarean": "Caesarean",
+  "@deliveryCaesarean": {},
+
+  "outcomeAlive": "Alive",
+  "@outcomeAlive": {},
+  "outcomeStillbirth": "Stillbirth",
+  "@outcomeStillbirth": {},
+  "outcomeNeonatalDeath": "Neonatal death",
+  "@outcomeNeonatalDeath": {
+    "description": "Died within 28 days of birth."
+  },
+  "outcomeMiscarriage": "Miscarriage",
+  "@outcomeMiscarriage": {},
+
+  "termPreterm": "Preterm",
+  "@termPreterm": {
+    "description": "Delivered before 37 weeks."
+  },
+  "termTerm": "Term",
+  "@termTerm": {
+    "description": "Delivered between 37 and 42 weeks."
+  },
+  "termPostTerm": "Post-term",
+  "@termPostTerm": {
+    "description": "Delivered after 42 weeks."
+  },
+
+  "sexMale": "Male",
+  "@sexMale": {},
+  "sexFemale": "Female",
+  "@sexFemale": {},
+
+  "pastPregnancyAddTitle": "Add a past pregnancy",
+  "@pastPregnancyAddTitle": {
+    "description": "Title of the sheet that records an earlier pregnancy."
+  },
+  "fieldYear": "Year of delivery",
+  "@fieldYear": {},
+  "fieldYearHint": "e.g. 2020",
+  "@fieldYearHint": {},
+  "fieldBirthWeightHint": "e.g. 3.2",
+  "@fieldBirthWeightHint": {
+    "description": "Example birth weight in kilograms."
+  },
+  "fieldTerm": "Term",
+  "@fieldTerm": {
+    "description": "Label for the field choosing preterm, term or post-term."
+  },
+  "fieldSex": "Sex",
+  "@fieldSex": {},
+  "fieldChildAge": "Child's age now",
+  "@fieldChildAge": {},
+  "hintChooseOne": "Choose one",
+  "@hintChooseOne": {
+    "description": "Placeholder in an empty dropdown."
+  },
+  "actionCancel": "Cancel",
+  "@actionCancel": {},
+  "actionSave": "Save",
+  "@actionSave": {},
+
+  "validationYearRange": "Enter a year between {min} and {max}",
+  "@validationYearRange": {
+    "placeholders": {
+      "min": { "type": "int", "example": "1950" },
+      "max": { "type": "int", "example": "2026" }
+    }
+  },
+  "validationWeightRange": "Enter a weight in kilograms, like 3.2",
+  "@validationWeightRange": {}
 }

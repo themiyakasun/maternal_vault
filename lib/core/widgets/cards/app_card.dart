@@ -18,6 +18,8 @@ class AppCard extends StatelessWidget {
     this.borderWidth = 1,
     this.boxShadow = AppColors.shadowCard,
     this.borderRadius = AppRadii.cardRadius,
+    this.leadingAccent,
+    this.accentWidth = 4,
   });
 
   final Widget child;
@@ -36,8 +38,42 @@ class AppCard extends StatelessWidget {
 
   final BorderRadius borderRadius;
 
+  /// A stripe down the leading edge, full height. For a card in a list where the
+  /// colour carries meaning — a past pregnancy's outcome, say — and a tinted fill
+  /// would be too loud to repeat down the page. Null draws no stripe.
+  final Color? leadingAccent;
+
+  /// Thickness of the [leadingAccent] stripe.
+  final double accentWidth;
+
   @override
   Widget build(BuildContext context) {
+    Widget content = Padding(padding: padding, child: child);
+
+    if (leadingAccent != null) {
+      content = ClipRRect(
+        // The stripe runs to the card's edge, so it has to be clipped to the
+        // same radius or its corners square off the rounded ones.
+        borderRadius: borderRadius,
+        child: Stack(
+          children: <Widget>[
+            // The padded content sizes the stack; the stripe is positioned
+            // against that height. A Row with CrossAxisAlignment.stretch would
+            // read cleaner but hands its children the incoming maxHeight, which
+            // is unbounded inside a scroll view.
+            content,
+            PositionedDirectional(
+              start: 0,
+              top: 0,
+              bottom: 0,
+              width: accentWidth,
+              child: ColoredBox(color: leadingAccent!),
+            ),
+          ],
+        ),
+      );
+    }
+
     return DecoratedBox(
       decoration: BoxDecoration(
         color: color,
@@ -47,7 +83,7 @@ class AppCard extends StatelessWidget {
             : Border.all(color: borderColor!, width: borderWidth),
         boxShadow: boxShadow,
       ),
-      child: Padding(padding: padding, child: child),
+      child: content,
     );
   }
 }
