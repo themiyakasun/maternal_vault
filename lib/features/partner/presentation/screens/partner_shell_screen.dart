@@ -1,30 +1,39 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/widgets/brand_backdrop.dart';
-import '../../../../core/widgets/tab_placeholder.dart';
 import '../../../../l10n/generated/app_localizations.dart';
+import '../../domain/emergency_plan.dart';
+import '../../domain/partner_agenda.dart';
 import '../../domain/partner_summary.dart';
 import '../../domain/partner_tab.dart';
 import '../widgets/partner_app_bar.dart';
+import 'partner_calendar_screen.dart';
+import 'partner_emergency_screen.dart';
 import 'partner_home_screen.dart';
 
 /// The partner's app once they have connected to a record: one header, three
 /// sections, one bottom bar — the same shape as the mother's shell.
 ///
 /// Every section is built; the bar switches between them over an [IndexedStack]
-/// so each keeps its scroll offset while another is on screen. Only [PartnerTab.home]
-/// has a screen yet — the other two stand in with a placeholder.
+/// so each keeps its scroll offset while another is on screen.
 class PartnerShellScreen extends StatefulWidget {
   const PartnerShellScreen({
     super.key,
     this.summary = const PartnerSummary.empty(),
+    this.agenda = const PartnerAgenda.empty(),
+    this.emergencyPlan = const EmergencyPlan.empty(),
     this.onOpenSettings,
     this.initialTab = PartnerTab.home,
   });
 
   /// Passed through to [PartnerHomeScreen].
   final PartnerSummary summary;
+
+  /// Passed through to [PartnerCalendarScreen].
+  final PartnerAgenda agenda;
+
+  /// Passed through to [PartnerEmergencyScreen].
+  final EmergencyPlan emergencyPlan;
 
   /// Opens settings. Null shows a notice rather than pretending to have a
   /// settings screen — see [_openSettings].
@@ -38,6 +47,8 @@ class PartnerShellScreen extends StatefulWidget {
   /// this to go back to.
   static Route<void> route({
     PartnerSummary summary = const PartnerSummary.empty(),
+    PartnerAgenda agenda = const PartnerAgenda.empty(),
+    EmergencyPlan emergencyPlan = const EmergencyPlan.empty(),
     VoidCallback? onOpenSettings,
   }) {
     return PageRouteBuilder<void>(
@@ -45,6 +56,8 @@ class PartnerShellScreen extends StatefulWidget {
       reverseTransitionDuration: const Duration(milliseconds: 350),
       pageBuilder: (BuildContext context, _, _) => PartnerShellScreen(
         summary: summary,
+        agenda: agenda,
+        emergencyPlan: emergencyPlan,
         onOpenSettings: onOpenSettings,
       ),
       transitionsBuilder:
@@ -113,17 +126,9 @@ class _PartnerShellScreenState extends State<PartnerShellScreen> {
       case PartnerTab.home:
         return PartnerHomeScreen(summary: widget.summary);
       case PartnerTab.calendar:
-        return TabPlaceholder(
-          icon: Icons.calendar_month_rounded,
-          title: l10n.tabCalendar,
-          accent: AppColors.tertiary,
-        );
+        return PartnerCalendarScreen(agenda: widget.agenda);
       case PartnerTab.emergency:
-        return TabPlaceholder(
-          icon: Icons.emergency_outlined,
-          title: l10n.tabEmergency,
-          accent: AppColors.error,
-        );
+        return PartnerEmergencyScreen(plan: widget.emergencyPlan);
     }
   }
 

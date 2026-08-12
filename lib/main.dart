@@ -8,6 +8,8 @@ import 'features/mother/domain/clinic_record.dart';
 import 'features/mother/domain/obstetric_history.dart';
 import 'features/mother/presentation/screens/mother_shell_screen.dart';
 import 'features/mother/presentation/screens/vault_setup_screen.dart';
+import 'features/partner/domain/emergency_plan.dart';
+import 'features/partner/domain/partner_agenda.dart';
 import 'features/partner/domain/partner_summary.dart';
 import 'features/partner/presentation/screens/connect_mother_record_screen.dart';
 import 'features/partner/presentation/screens/partner_shell_screen.dart';
@@ -117,9 +119,11 @@ class _MaternalVaultAppState extends State<MaternalVaultApp> {
   void _openPartnerShell() {
     _navigator.pushReplacement(
       PartnerShellScreen.route(
-        // Demo data until the connected record is read — see
-        // PartnerSummary.sample.
+        // Demo data until the connected record is read — see the .sample
+        // constructors.
         summary: const PartnerSummary.sample(),
+        agenda: PartnerAgenda.sample(),
+        emergencyPlan: const EmergencyPlan.sample(),
       ),
     );
   }

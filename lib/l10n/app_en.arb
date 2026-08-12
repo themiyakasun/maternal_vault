@@ -980,5 +980,160 @@
   "partnerSettingsNotConnected": "Settings are not ready yet.",
   "@partnerSettingsNotConnected": {
     "description": "Shown when the settings gear is tapped before a settings screen exists."
+  },
+  "partnerCalendarTitle": "Appointments & Tasks",
+  "@partnerCalendarTitle": {
+    "description": "Heading at the top of the partner calendar tab."
+  },
+  "partnerCalendarSubtitle": "Manage your upcoming clinic visits and daily preparation checklist to ensure a smooth journey.",
+  "@partnerCalendarSubtitle": {
+    "description": "Supporting line under the calendar tab heading."
+  },
+  "partnerUpcomingVisit": "Upcoming Visit",
+  "@partnerUpcomingVisit": {
+    "description": "Section heading above the next-visit card."
+  },
+  "partnerNextClinicVisit": "NEXT CLINIC VISIT",
+  "@partnerNextClinicVisit": {
+    "description": "Small caps label above the visit date. Set in caps in English; languages without letter case use their normal form."
+  },
+  "partnerAddToCalendar": "Add to Device Calendar",
+  "@partnerAddToCalendar": {
+    "description": "Button that adds the clinic visit to the phone's own calendar."
+  },
+  "partnerVisitReminder": "Please remember to bring your latest ultrasound scans and standard ID.",
+  "@partnerVisitReminder": {
+    "description": "Callout under the visit card reminding what to take to the appointment."
+  },
+  "partnerActionChecklist": "Action Checklist",
+  "@partnerActionChecklist": {
+    "description": "Section heading above the preparation to-do list."
+  },
+  "partnerTasksRemaining": "{count} Tasks Remaining",
+  "@partnerTasksRemaining": {
+    "description": "Chip beside the checklist heading counting tasks not yet ticked.",
+    "placeholders": {
+      "count": {
+        "type": "int"
+      }
+    }
+  },
+  "partnerAllTasksDone": "All tasks done",
+  "@partnerAllTasksDone": {
+    "description": "Replaces the remaining-count chip once every task is ticked."
+  },
+  "partnerCalendarAddNotConnected": "Adding to your device calendar is not ready yet.",
+  "@partnerCalendarAddNotConnected": {
+    "description": "Shown when Add to Device Calendar is tapped before that is wired up."
+  },
+  "partnerNoUpcomingVisit": "No upcoming visit scheduled.",
+  "@partnerNoUpcomingVisit": {
+    "description": "Shown in place of the visit card when no visit is booked."
+  },
+  "partnerTaskBagTitle": "Pack the Hospital Bag",
+  "@partnerTaskBagTitle": {
+    "description": "Title of the first preparation task. Demo content."
+  },
+  "partnerTaskBagBody": "Essentials for baby and partner.",
+  "@partnerTaskBagBody": {
+    "description": "Subtitle of the hospital-bag task."
+  },
+  "partnerTaskBirthPlanTitle": "Prepare Birth Plan",
+  "@partnerTaskBirthPlanTitle": {
+    "description": "Title of the second preparation task. Demo content."
+  },
+  "partnerTaskBirthPlanBody": "Review preferences with your doctor.",
+  "@partnerTaskBirthPlanBody": {
+    "description": "Subtitle of the birth-plan task."
+  },
+  "partnerTaskFolicTitle": "Review Folic Acid Routine",
+  "@partnerTaskFolicTitle": {
+    "description": "Title of the third preparation task. Demo content."
+  },
+  "partnerTaskFolicBody": "Ensure daily supplements are taken.",
+  "@partnerTaskFolicBody": {
+    "description": "Subtitle of the folic-acid task."
+  },
+  "partnerEmergencyTitle": "Emergency Preparedness Plan",
+  "@partnerEmergencyTitle": {
+    "description": "Heading at the top of the partner emergency tab."
+  },
+  "partnerEmergencySubtitle": "Your secure, immediate reference for critical contacts and logistics when you need them most.",
+  "@partnerEmergencySubtitle": {
+    "description": "Supporting line under the emergency tab heading."
+  },
+  "partnerQuickContacts": "Quick Contacts",
+  "@partnerQuickContacts": {
+    "description": "Section heading above the emergency contacts card."
+  },
+  "partnerContactEmergency": "EMERGENCY CONTACT PERSON",
+  "@partnerContactEmergency": {
+    "description": "Role label on the highlighted first contact. Set in caps in English; languages without letter case use their normal form."
+  },
+  "partnerContactPhm": "PHM (MIDWIFE)",
+  "@partnerContactPhm": {
+    "description": "Role label for the public health midwife contact. PHM is the local clinical abbreviation; keep it. Set in caps in English."
+  },
+  "partnerContactMoh": "MOH OFFICE",
+  "@partnerContactMoh": {
+    "description": "Role label for the Medical Officer of Health office. MOH is the local abbreviation; keep it. Set in caps in English."
+  },
+  "actionCall": "Call",
+  "@actionCall": {
+    "description": "Tooltip and screen-reader label on a contact's phone button."
+  },
+  "partnerCallNotConnected": "Calling from the app is not ready yet.",
+  "@partnerCallNotConnected": {
+    "description": "Shown when a call button is tapped before the dialer is wired up."
+  },
+  "partnerNoContacts": "No emergency contacts saved yet.",
+  "@partnerNoContacts": {
+    "description": "Shown in place of the contacts card when none have been added."
+  },
+  "partnerBirthPlanLogistics": "Birth Plan Logistics",
+  "@partnerBirthPlanLogistics": {
+    "description": "Section heading above the travel-to-hospital card."
+  },
+  "partnerLiveTraffic": "Live Traffic: Light",
+  "@partnerLiveTraffic": {
+    "description": "Pill over the route map showing current traffic. Demo content."
+  },
+  "partnerIntendedHospital": "INTENDED HOSPITAL",
+  "@partnerIntendedHospital": {
+    "description": "Label above the planned delivery hospital. Set in caps in English; languages without letter case use their normal form."
+  },
+  "partnerModeOfTransport": "MODE OF TRANSPORT",
+  "@partnerModeOfTransport": {
+    "description": "Label above how the mother will travel to hospital. Set in caps in English."
+  },
+  "partnerDistance": "DISTANCE",
+  "@partnerDistance": {
+    "description": "Label above the distance to hospital. Set in caps in English."
+  },
+  "partnerEstTime": "EST. TIME",
+  "@partnerEstTime": {
+    "description": "Label above the estimated travel time. Set in caps in English."
+  },
+  "partnerDistanceValue": "{km} km",
+  "@partnerDistanceValue": {
+    "description": "Distance to hospital in kilometres.",
+    "placeholders": {
+      "km": {
+        "type": "int"
+      }
+    }
+  },
+  "partnerEstTimeValue": "{minutes} mins",
+  "@partnerEstTimeValue": {
+    "description": "Estimated travel time to hospital in minutes.",
+    "placeholders": {
+      "minutes": {
+        "type": "int"
+      }
+    }
+  },
+  "partnerLogisticsEmpty": "No travel plan recorded yet.",
+  "@partnerLogisticsEmpty": {
+    "description": "Shown in place of the logistics card when no plan has been set."
   }
 }
