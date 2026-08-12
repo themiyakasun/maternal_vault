@@ -881,5 +881,104 @@
   "planSaveNotConnected": "Saving the plan is not ready yet.",
   "@planSaveNotConnected": {
     "description": "Shown when Save Plan is tapped before storage exists."
+  },
+  "partnerBrand": "PartnerSupport",
+  "@partnerBrand": {
+    "description": "The partner app's name, shown in its header next to the avatar."
+  },
+  "partnerHomeGreeting": "Week {week} - You're doing great!",
+  "@partnerHomeGreeting": {
+    "description": "Warm heading at the top of the partner home screen.",
+    "placeholders": {
+      "week": {
+        "type": "int"
+      }
+    }
+  },
+  "partnerHomeGreetingBody": "Here is a summary of how things are going today.",
+  "@partnerHomeGreetingBody": {
+    "description": "Subtitle under the partner home greeting."
+  },
+  "partnerPoaWeeks": "POA: {week} Weeks",
+  "@partnerPoaWeeks": {
+    "description": "Period-of-amenorrhoea pill on the baby-development card — how many weeks pregnant.",
+    "placeholders": {
+      "week": {
+        "type": "int"
+      }
+    }
+  },
+  "partnerBabyDevTitle": "Baby's Development",
+  "@partnerBabyDevTitle": {
+    "description": "Title of the baby-development card."
+  },
+  "partnerBabySize": "Baby is the size of an ear of corn.",
+  "@partnerBabySize": {
+    "description": "This week's size comparison for the baby. Demo content; a real build reads it per week."
+  },
+  "partnerHomeProgressWeek": "Week {week}",
+  "@partnerHomeProgressWeek": {
+    "description": "An endpoint label under the pregnancy progress bar, e.g. Week 1 and Week 40.",
+    "placeholders": {
+      "week": {
+        "type": "int"
+      }
+    }
+  },
+  "partnerMotherStatusTitle": "Mother's Status",
+  "@partnerMotherStatusTitle": {
+    "description": "Title of the mother-status card."
+  },
+  "partnerMotherStatusHeadline": "All vitals look great.",
+  "@partnerMotherStatusHeadline": {
+    "description": "Reassuring one-liner on the mother-status card when vitals are in range."
+  },
+  "partnerMotherStatusBody": "Resting comfortably and energy levels are stable.",
+  "@partnerMotherStatusBody": {
+    "description": "Supporting line under the mother-status headline."
+  },
+  "partnerTipNutritionTitle": "Nutrition Tip",
+  "@partnerTipNutritionTitle": {
+    "description": "Title of the nutrition tip card."
+  },
+  "partnerTipNutritionBody": "Focus on iron-rich foods this week to support blood volume expansion.",
+  "@partnerTipNutritionBody": {
+    "description": "Body of the nutrition tip. Demo content."
+  },
+  "partnerTipSupportTitle": "Partner Support",
+  "@partnerTipSupportTitle": {
+    "description": "Title of the partner-support tip card."
+  },
+  "partnerTipSupportBody": "Offer a lower back massage. Gentle pressure can relieve structural discomfort.",
+  "@partnerTipSupportBody": {
+    "description": "Body of the partner-support tip. Demo content."
+  },
+  "partnerTipCheckupTitle": "Upcoming Checkup",
+  "@partnerTipCheckupTitle": {
+    "description": "Title of the upcoming-checkup tip card."
+  },
+  "partnerTipCheckupBody": "Glucose screening test scheduled for next week.",
+  "@partnerTipCheckupBody": {
+    "description": "Body of the upcoming-checkup tip. Demo content."
+  },
+  "tabHome": "Home",
+  "@tabHome": {
+    "description": "Bottom-bar label for the partner home tab."
+  },
+  "tabCalendar": "Calendar",
+  "@tabCalendar": {
+    "description": "Bottom-bar label for the calendar tab."
+  },
+  "tabEmergency": "Emergency",
+  "@tabEmergency": {
+    "description": "Bottom-bar label for the emergency tab."
+  },
+  "actionSettings": "Settings",
+  "@actionSettings": {
+    "description": "Tooltip on the settings gear in the partner header."
+  },
+  "partnerSettingsNotConnected": "Settings are not ready yet.",
+  "@partnerSettingsNotConnected": {
+    "description": "Shown when the settings gear is tapped before a settings screen exists."
   }
 }

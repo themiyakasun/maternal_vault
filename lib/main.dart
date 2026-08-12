@@ -8,7 +8,9 @@ import 'features/mother/domain/clinic_record.dart';
 import 'features/mother/domain/obstetric_history.dart';
 import 'features/mother/presentation/screens/mother_shell_screen.dart';
 import 'features/mother/presentation/screens/vault_setup_screen.dart';
+import 'features/partner/domain/partner_summary.dart';
 import 'features/partner/presentation/screens/connect_mother_record_screen.dart';
+import 'features/partner/presentation/screens/partner_shell_screen.dart';
 import 'features/splash/presentation/screens/splash_screen.dart';
 import 'features/welcome/domain/user_role.dart';
 import 'features/welcome/presentation/screens/welcome_screen.dart';
@@ -99,8 +101,27 @@ class _MaternalVaultAppState extends State<MaternalVaultApp> {
       case UserRole.partner:
         // Pushed: the connect screen has a back chip, and someone who picked
         // the wrong role should land back on the role step.
-        _navigator.push(ConnectMotherRecordScreen.route());
+        _navigator.push(
+          ConnectMotherRecordScreen.route(
+            // TODO: replace with real scanning/pairing. Both currently just open
+            // the partner shell so the flow is walkable end to end.
+            onScanNow: _openPartnerShell,
+            onEnterCode: _openPartnerShell,
+          ),
+        );
     }
+  }
+
+  /// Replaces the connect screen rather than stacking on it — pairing is done
+  /// by now and there is nothing to return to.
+  void _openPartnerShell() {
+    _navigator.pushReplacement(
+      PartnerShellScreen.route(
+        // Demo data until the connected record is read — see
+        // PartnerSummary.sample.
+        summary: const PartnerSummary.sample(),
+      ),
+    );
   }
 
   /// Replaces setup rather than stacking on it — the vault is built by now and

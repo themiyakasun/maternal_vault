@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_text_styles.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../l10n/generated/app_localizations.dart';
+import '../constants/app_colors.dart';
+import '../constants/app_text_styles.dart';
+import '../theme/app_theme.dart';
+import '../../l10n/generated/app_localizations.dart';
 
 /// Stands in for a tab whose screen has not been designed yet.
 ///
-/// Shared by all four so they read as one consistent "not yet" rather than four
-/// different degrees of emptiness, and so the bottom bar can be fully navigable
-/// while the sections behind it are still being built.
+/// Shared by every shell so unbuilt sections read as one consistent "not yet"
+/// rather than several different degrees of emptiness, and so a bottom bar can
+/// be fully navigable while the sections behind it are still being built.
 class TabPlaceholder extends StatelessWidget {
   const TabPlaceholder({
     super.key,
