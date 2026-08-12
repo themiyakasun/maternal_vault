@@ -22,6 +22,8 @@ class AppTextField extends StatelessWidget {
     this.suffixText,
     this.textInputAction,
     this.onChanged,
+    this.maxLines = 1,
+    this.minLines,
   });
 
   /// Caption shown above the field.
@@ -49,6 +51,15 @@ class AppTextField extends StatelessWidget {
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onChanged;
 
+  /// How many lines the field grows to. 1 keeps it a single line; a larger value
+  /// makes it a text area, for a notes field where the answer runs to a sentence
+  /// or two.
+  final int maxLines;
+
+  /// The height the field starts at before it grows, when [maxLines] allows more
+  /// than one. Null lets it open at [maxLines].
+  final int? minLines;
+
   @override
   Widget build(BuildContext context) {
     return LabeledField(
@@ -60,6 +71,8 @@ class AppTextField extends StatelessWidget {
         keyboardType: keyboardType,
         textCapitalization: textCapitalization,
         maxLength: maxLength,
+        maxLines: maxLines,
+        minLines: minLines,
         textInputAction: textInputAction,
         onChanged: onChanged,
         style: AppTextStyles.bodyLg,

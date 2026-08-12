@@ -18,6 +18,7 @@ class AppTextButton extends StatelessWidget {
     required this.onPressed,
     this.tone = AppButtonTone.primary,
     this.icon,
+    this.caps = false,
   });
 
   final String label;
@@ -28,6 +29,11 @@ class AppTextButton extends StatelessWidget {
   final AppButtonTone tone;
 
   final IconData? icon;
+
+  /// Renders the label small, spaced and uppercased — the "VIEW ALL" beside a
+  /// section heading, where a full-size label would compete with the heading
+  /// itself. Sinhala and Tamil have no case, so uppercasing is a no-op there.
+  final bool caps;
 
   @override
   Widget build(BuildContext context) {
@@ -41,7 +47,14 @@ class AppTextButton extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: AppSpacing.stackSm),
     );
 
-    final Text text = Text(label, style: AppTextStyles.button);
+    final Text text = Text(
+      caps ? label.toUpperCase() : label,
+      // labelCaps carries its own muted colour, which would win over the
+      // button's foreground; restate the tone so it does not.
+      style: caps
+          ? AppTextStyles.labelCaps.copyWith(color: tone.fill)
+          : AppTextStyles.button,
+    );
 
     if (icon == null) {
       return TextButton(onPressed: onPressed, style: style, child: text);

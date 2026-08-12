@@ -1,27 +1,29 @@
 import 'package:flutter/material.dart';
 
-import '../../../../core/constants/app_colors.dart';
 import '../../../../core/l10n/app_locales.dart';
 import '../../../../core/widgets/brand_backdrop.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../domain/basic_profile.dart';
+import '../../domain/clinic_record.dart';
+import '../../domain/delivery_plan.dart';
 import '../../domain/key_vitals.dart';
 import '../../domain/medical_history.dart';
 import '../../domain/mother_tab.dart';
 import '../../domain/obstetric_history.dart';
 import '../widgets/language_sheet.dart';
 import '../widgets/pregnancy_record_app_bar.dart';
-import '../widgets/tab_placeholder.dart';
 import 'basic_profile_screen.dart';
+import 'clinic_visits_screen.dart';
 import 'medical_history_screen.dart';
 import 'obstetric_history_screen.dart';
+import 'plan_screen.dart';
 
 /// The mother's app once setup is done: one header, five sections, one bottom
 /// bar.
 ///
-/// [MotherTab.profile], [MotherTab.history] and [MotherTab.obstetric] are built;
-/// the rest render [TabPlaceholder] so the bar is fully navigable while those
-/// sections are still being designed.
+/// Every section is built; the bar switches between them over an [IndexedStack],
+/// so each keeps its scroll offset and any half-filled form while another is on
+/// screen.
 class MotherShellScreen extends StatefulWidget {
   const MotherShellScreen({
     super.key,
@@ -29,9 +31,13 @@ class MotherShellScreen extends StatefulWidget {
     this.vitals = const KeyVitals.empty(),
     this.history = const MedicalHistory.empty(),
     this.obstetric = const ObstetricHistory.empty(),
+    this.clinic = const ClinicRecord.empty(),
+    this.plan = const DeliveryPlan.empty(),
     this.onSubmitProfile,
     this.onChangeHistory,
     this.onChangeObstetric,
+    this.onChangeClinic,
+    this.onSavePlan,
     this.initialTab = MotherTab.profile,
   });
 
@@ -48,6 +54,12 @@ class MotherShellScreen extends StatefulWidget {
   /// Passed through to [ObstetricHistoryScreen].
   final ObstetricHistory obstetric;
 
+  /// Passed through to [ClinicVisitsScreen].
+  final ClinicRecord clinic;
+
+  /// Passed through to [PlanScreen].
+  final DeliveryPlan plan;
+
   /// Passed through to [BasicProfileScreen.onSubmit].
   final ValueChanged<BasicProfile>? onSubmitProfile;
 
@@ -56,6 +68,12 @@ class MotherShellScreen extends StatefulWidget {
 
   /// Passed through to [ObstetricHistoryScreen.onChanged].
   final ValueChanged<ObstetricHistory>? onChangeObstetric;
+
+  /// Passed through to [ClinicVisitsScreen.onChanged].
+  final ValueChanged<ClinicRecord>? onChangeClinic;
+
+  /// Passed through to [PlanScreen.onSave].
+  final ValueChanged<DeliveryPlan>? onSavePlan;
 
   /// Which section to open on. A param so a notification or a deep link can
   /// land somewhere other than Profile later.
@@ -68,9 +86,13 @@ class MotherShellScreen extends StatefulWidget {
     KeyVitals vitals = const KeyVitals.empty(),
     MedicalHistory history = const MedicalHistory.empty(),
     ObstetricHistory obstetric = const ObstetricHistory.empty(),
+    ClinicRecord clinic = const ClinicRecord.empty(),
+    DeliveryPlan plan = const DeliveryPlan.empty(),
     ValueChanged<BasicProfile>? onSubmitProfile,
     ValueChanged<MedicalHistory>? onChangeHistory,
     ValueChanged<ObstetricHistory>? onChangeObstetric,
+    ValueChanged<ClinicRecord>? onChangeClinic,
+    ValueChanged<DeliveryPlan>? onSavePlan,
   }) {
     return PageRouteBuilder<void>(
       transitionDuration: const Duration(milliseconds: 450),
@@ -80,9 +102,13 @@ class MotherShellScreen extends StatefulWidget {
         vitals: vitals,
         history: history,
         obstetric: obstetric,
+        clinic: clinic,
+        plan: plan,
         onSubmitProfile: onSubmitProfile,
         onChangeHistory: onChangeHistory,
         onChangeObstetric: onChangeObstetric,
+        onChangeClinic: onChangeClinic,
+        onSavePlan: onSavePlan,
       ),
       transitionsBuilder:
           (BuildContext context, Animation<double> animation, _, Widget child) {
@@ -169,12 +195,12 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
           onChanged: widget.onChangeObstetric,
         );
       case MotherTab.clinic:
-      case MotherTab.plan:
-        return TabPlaceholder(
-          icon: _icon(tab),
-          title: _label(l10n, tab),
-          accent: _accent(tab),
+        return ClinicVisitsScreen(
+          record: widget.clinic,
+          onChanged: widget.onChangeClinic,
         );
+      case MotherTab.plan:
+        return PlanScreen(plan: widget.plan, onSave: widget.onSavePlan);
     }
   }
 
@@ -204,9 +230,11 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
         return l10n.historyTitle;
       case MotherTab.obstetric:
         return l10n.obstetricTitle;
-      case MotherTab.profile:
       case MotherTab.clinic:
+        return l10n.clinicTitle;
       case MotherTab.plan:
+        return l10n.planTitle;
+      case MotherTab.profile:
         return l10n.recordTitle;
     }
   }
@@ -238,21 +266,6 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
         return Icons.local_hospital_outlined;
       case MotherTab.plan:
         return Icons.event_note_outlined;
-    }
-  }
-
-  /// Colour identity for a placeholder's glyph. Cycles the three brand accents
-  /// so consecutive sections do not read as the same one.
-  Color _accent(MotherTab tab) {
-    switch (tab) {
-      case MotherTab.profile:
-      case MotherTab.obstetric:
-        return AppColors.primary;
-      case MotherTab.clinic:
-        return AppColors.secondary;
-      case MotherTab.history:
-      case MotherTab.plan:
-        return AppColors.tertiary;
     }
   }
 }

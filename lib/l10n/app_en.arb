@@ -567,5 +567,319 @@
     }
   },
   "validationWeightRange": "Enter a weight in kilograms, like 3.2",
-  "@validationWeightRange": {}
+  "@validationWeightRange": {},
+  "clinicTitle": "Clinic Visits",
+  "@clinicTitle": {
+    "description": "Header title on the clinic tab."
+  },
+  "sectionRoutineLogs": "Routine Logs",
+  "@sectionRoutineLogs": {
+    "description": "Heading above the strip of visit cards."
+  },
+  "actionViewAll": "View all",
+  "@actionViewAll": {
+    "description": "Opens the full visit history. Rendered uppercase beside the section heading."
+  },
+  "actionLogVisit": "Log New Visit",
+  "@actionLogVisit": {
+    "description": "Records a new clinic visit."
+  },
+  "visitsEmpty": "No visits recorded yet. The first one appears here after your next clinic appointment.",
+  "@visitsEmpty": {
+    "description": "Shown in place of the visit strip when the record has no visits."
+  },
+  "visitWeek": "Week {week}",
+  "@visitWeek": {
+    "description": "Gestational week a visit took place in, the headline on a visit card.",
+    "placeholders": {
+      "week": {
+        "type": "int"
+      }
+    }
+  },
+  "statusNormal": "Normal",
+  "@statusNormal": {
+    "description": "Chip on a visit where everything read as expected."
+  },
+  "statusReview": "Review",
+  "@statusReview": {
+    "description": "Chip on a visit the midwife wants to look at again."
+  },
+  "fieldBp": "BP",
+  "@fieldBp": {
+    "description": "Blood pressure, abbreviated as it is on the clinic card."
+  },
+  "fieldWeight": "Weight",
+  "@fieldWeight": {
+    "description": "The mother's weight at a visit."
+  },
+  "fieldFundalHeight": "Fundal Ht",
+  "@fieldFundalHeight": {
+    "description": "Symphysis-fundal height at a visit, abbreviated."
+  },
+  "fieldFhs": "FHS",
+  "@fieldFhs": {
+    "description": "Fetal heart sounds, abbreviated as it is on the clinic card."
+  },
+  "fieldUrine": "Urine",
+  "@fieldUrine": {
+    "description": "The urine dipstick row on a visit card."
+  },
+  "unitBpm": "bpm",
+  "@unitBpm": {
+    "description": "Beats per minute, the unit for fetal heart sounds."
+  },
+  "urineSugarShort": "S: {value}",
+  "@urineSugarShort": {
+    "description": "Sugar half of the urine reading. S is short for sugar.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "urineAlbuminShort": "A: {value}",
+  "@urineAlbuminShort": {
+    "description": "Albumin half of the urine reading. A is short for albumin.",
+    "placeholders": {
+      "value": {
+        "type": "String"
+      }
+    }
+  },
+  "urineNil": "Nil",
+  "@urineNil": {
+    "description": "Dipstick result: nothing detected."
+  },
+  "urineTrace": "Trace",
+  "@urineTrace": {
+    "description": "Dipstick result: a trace detected."
+  },
+  "sectionGrowthTracking": "Growth Tracking",
+  "@sectionGrowthTracking": {
+    "description": "Heading above the two growth charts."
+  },
+  "chartWeightGain": "Weight Gain",
+  "@chartWeightGain": {
+    "description": "Title of the mother's weight chart."
+  },
+  "chartWeightGainInfo": "Your weight at each clinic visit. A steady climb through the second and third trimesters is what the midwife looks for — the shape of the line matters more than any single number.",
+  "@chartWeightGainInfo": {
+    "description": "Explainer behind the info glyph on the weight chart."
+  },
+  "chartFundalHeight": "SFH Tracking",
+  "@chartFundalHeight": {
+    "description": "Title of the symphysis-fundal height chart."
+  },
+  "chartFundalHeightInfo": "Symphysis-fundal height is the distance from your pubic bone to the top of your womb, in centimetres. From about week 20 it roughly matches how many weeks pregnant you are. The dashed line is the expected measurement to read yours against.",
+  "@chartFundalHeightInfo": {
+    "description": "Explainer behind the info glyph on the fundal height chart."
+  },
+  "chartEmpty": "There are not enough visits to draw this yet.",
+  "@chartEmpty": {
+    "description": "Shown inside a chart card when fewer than two measurements exist."
+  },
+  "legendYourWeight": "Your Weight",
+  "@legendYourWeight": {
+    "description": "Legend entry for the mother's measured weight."
+  },
+  "legendYourFundalHeight": "Your SFH",
+  "@legendYourFundalHeight": {
+    "description": "Legend entry for the measured fundal height."
+  },
+  "legendExpected": "Expected",
+  "@legendExpected": {
+    "description": "Legend entry for the dashed reference curve."
+  },
+  "weeksShort": "{weeks}w",
+  "@weeksShort": {
+    "description": "Gestational week as a chart axis label, kept short to fit.",
+    "placeholders": {
+      "weeks": {
+        "type": "int"
+      }
+    }
+  },
+  "actionWhatIsThis": "What is this?",
+  "@actionWhatIsThis": {
+    "description": "Tooltip on a chart's info glyph."
+  },
+  "actionClose": "Close",
+  "@actionClose": {
+    "description": "Dismisses a dialog."
+  },
+  "clinicViewAllNotConnected": "The full visit list is not ready yet.",
+  "@clinicViewAllNotConnected": {
+    "description": "Shown when View all is tapped before the list exists."
+  },
+  "visitAddSubtitle": "Copy the readings from your clinic card.",
+  "@visitAddSubtitle": {
+    "description": "Line under the title of the log-a-visit sheet."
+  },
+  "fieldVisitWeek": "Gestational week",
+  "@fieldVisitWeek": {
+    "description": "How many weeks pregnant the mother was at the visit."
+  },
+  "fieldVisitDate": "Visit date",
+  "@fieldVisitDate": {
+    "description": "The day the visit happened."
+  },
+  "fieldVisitStatus": "How it read",
+  "@fieldVisitStatus": {
+    "description": "Whether the visit was normal or flagged for review."
+  },
+  "fieldSystolic": "Systolic",
+  "@fieldSystolic": {
+    "description": "Upper blood pressure number."
+  },
+  "fieldDiastolic": "Diastolic",
+  "@fieldDiastolic": {
+    "description": "Lower blood pressure number."
+  },
+  "fieldUrineSugar": "Urine sugar",
+  "@fieldUrineSugar": {
+    "description": "Sugar column of the urine dipstick."
+  },
+  "fieldUrineAlbumin": "Urine albumin",
+  "@fieldUrineAlbumin": {
+    "description": "Albumin column of the urine dipstick."
+  },
+  "validationNumberRange": "Enter a number between {min} and {max}",
+  "@validationNumberRange": {
+    "description": "Shown when a typed measurement is outside a plausible range. The label above the field already says which measurement it is.",
+    "placeholders": {
+      "min": {
+        "type": "int"
+      },
+      "max": {
+        "type": "int"
+      }
+    }
+  },
+  "planTitle": "Emergency & Delivery",
+  "@planTitle": {
+    "description": "Header title on the plan tab."
+  },
+  "sectionEmergencyPlan": "Emergency Plan",
+  "@sectionEmergencyPlan": {
+    "description": "Heading for the how-to-reach-hospital section."
+  },
+  "sectionDeliverySummary": "Delivery Summary",
+  "@sectionDeliverySummary": {
+    "description": "Heading for the what-happened-at-the-birth section."
+  },
+  "sectionFamilyPlanning": "Family Planning",
+  "@sectionFamilyPlanning": {
+    "description": "Heading for the after-the-birth contraception section."
+  },
+  "fieldIntendedHospital": "Intended Hospital / Clinic",
+  "@fieldIntendedHospital": {
+    "description": "Where the mother plans to deliver."
+  },
+  "fieldIntendedHospitalHint": "Where you plan to deliver",
+  "@fieldIntendedHospitalHint": {
+    "description": "Placeholder for the intended hospital field."
+  },
+  "fieldTransportMode": "Mode of Transport",
+  "@fieldTransportMode": {
+    "description": "How the mother will get to hospital."
+  },
+  "fieldTransportCost": "Est. Cost (Transport)",
+  "@fieldTransportCost": {
+    "description": "Rough cost of the transport."
+  },
+  "fieldTransportCostHint": "Amount",
+  "@fieldTransportCostHint": {
+    "description": "Placeholder for the transport cost field."
+  },
+  "fieldDistanceKm": "Distance (km)",
+  "@fieldDistanceKm": {
+    "description": "Distance to the hospital in kilometres."
+  },
+  "fieldEstTimeMinutes": "Est. Time (mins)",
+  "@fieldEstTimeMinutes": {
+    "description": "Rough travel time to the hospital in minutes."
+  },
+  "fieldDateOfBirth": "Date of Birth",
+  "@fieldDateOfBirth": {
+    "description": "The day the baby was born."
+  },
+  "fieldModeOfDelivery": "Mode of Delivery",
+  "@fieldModeOfDelivery": {
+    "description": "How the baby was delivered."
+  },
+  "fieldEpisiotomy": "Episiotomy Performed",
+  "@fieldEpisiotomy": {
+    "description": "Whether an episiotomy was performed at the birth."
+  },
+  "fieldComplications": "Abnormalities / Complications",
+  "@fieldComplications": {
+    "description": "Free-text note of anything that went wrong at the birth."
+  },
+  "fieldComplicationsHint": "Note any complications...",
+  "@fieldComplicationsHint": {
+    "description": "Placeholder for the complications note."
+  },
+  "fieldApgarScore": "Apgar Score (1 min / 5 min)",
+  "@fieldApgarScore": {
+    "description": "Caption above the two Apgar score steppers."
+  },
+  "apgarOneMinute": "1 min",
+  "@apgarOneMinute": {
+    "description": "Placeholder in the one-minute Apgar stepper."
+  },
+  "apgarFiveMinutes": "5 min",
+  "@apgarFiveMinutes": {
+    "description": "Placeholder in the five-minute Apgar stepper."
+  },
+  "fieldPostPartumMethod": "Chosen Post-Partum Method",
+  "@fieldPostPartumMethod": {
+    "description": "Contraceptive method chosen for after the birth."
+  },
+  "hintSelectMode": "Select mode",
+  "@hintSelectMode": {
+    "description": "Placeholder for a mode dropdown, e.g. transport or delivery."
+  },
+  "hintSelectMethod": "Select a method...",
+  "@hintSelectMethod": {
+    "description": "Placeholder for the family planning method dropdown."
+  },
+  "actionSavePlan": "Save Plan",
+  "@actionSavePlan": {
+    "description": "Button that saves the emergency and delivery plan."
+  },
+  "transportAmbulance": "Ambulance",
+  "@transportAmbulance": {},
+  "transportOwnVehicle": "Own vehicle",
+  "@transportOwnVehicle": {},
+  "transportThreeWheeler": "Three-wheeler",
+  "@transportThreeWheeler": {},
+  "transportPublic": "Public transport",
+  "@transportPublic": {},
+  "transportNeighbour": "Neighbour's vehicle",
+  "@transportNeighbour": {},
+  "transportOther": "Other",
+  "@transportOther": {},
+  "familyPlanningUndecided": "Undecided",
+  "@familyPlanningUndecided": {},
+  "familyPlanningNone": "None",
+  "@familyPlanningNone": {},
+  "familyPlanningPills": "Oral pills",
+  "@familyPlanningPills": {},
+  "familyPlanningInjectable": "Injectable (DMPA)",
+  "@familyPlanningInjectable": {},
+  "familyPlanningImplant": "Implant",
+  "@familyPlanningImplant": {},
+  "familyPlanningIud": "IUD / Loop",
+  "@familyPlanningIud": {},
+  "familyPlanningTubalLigation": "Tubal ligation (LRT)",
+  "@familyPlanningTubalLigation": {},
+  "familyPlanningCondoms": "Condoms",
+  "@familyPlanningCondoms": {},
+  "familyPlanningOther": "Other",
+  "@familyPlanningOther": {},
+  "planSaveNotConnected": "Saving the plan is not ready yet.",
+  "@planSaveNotConnected": {
+    "description": "Shown when Save Plan is tapped before storage exists."
+  }
 }
