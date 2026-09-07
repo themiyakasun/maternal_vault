@@ -3,7 +3,12 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 
 import 'core/l10n/app_locales.dart';
 import 'core/l10n/locale_controller.dart';
+import 'core/security/vault_auth_manager.dart';
 import 'core/theme/app_theme.dart';
+import 'data/datasources/encrypted_db_helper.dart';
+import 'features/auth/presentation/screens/create_pin_screen.dart';
+import 'features/auth/presentation/screens/vault_lock_screen.dart';
+import 'features/mother/data/services/vault_setup_service.dart';
 import 'features/mother/domain/clinic_record.dart';
 import 'features/mother/domain/obstetric_history.dart';
 import 'features/mother/presentation/screens/mother_shell_screen.dart';
@@ -67,9 +72,8 @@ class _MaternalVaultAppState extends State<MaternalVaultApp> {
             GlobalCupertinoLocalizations.delegate,
           ],
           home: SplashScreen(
-            // TODO: hand real startup work (session restore, cache warm-up) to
-            // `initialization`.
-            onComplete: _openWelcome,
+            initialization: _checkInitialSession(),
+            onComplete: _onSplashComplete,
           ),
         );
       },
@@ -77,6 +81,35 @@ class _MaternalVaultAppState extends State<MaternalVaultApp> {
   }
 
   NavigatorState get _navigator => _navigatorKey.currentState!;
+
+  bool _vaultExists = false;
+  bool _hasPin = false;
+
+  Future<void> _checkInitialSession() async {
+    try {
+      _vaultExists = await EncryptedDatabaseHelper.doesDatabaseExist();
+      _hasPin = await VaultAuthManager.hasPin();
+    } catch (_) {
+      _vaultExists = false;
+      _hasPin = false;
+    }
+  }
+
+  void _onSplashComplete() {
+    if (_vaultExists && _hasPin) {
+      _openVaultLock();
+    } else {
+      _openWelcome();
+    }
+  }
+
+  void _openVaultLock() {
+    _navigator.pushReplacement(
+      VaultLockScreen.route(
+        onUnlocked: _openMotherShell,
+      ),
+    );
+  }
 
   void _openWelcome() {
     _navigator.pushReplacement(
@@ -92,12 +125,10 @@ class _MaternalVaultAppState extends State<MaternalVaultApp> {
     // TODO: persist the role and the chosen language before routing.
     switch (role) {
       case UserRole.expectantMother:
-        // Replaces the flow: setup is not resumable and the screen offers no
-        // way back into it.
+        // Guide expectant mother to set her 6-digit PIN before generating the encrypted vault
         _navigator.pushReplacement(
-          VaultSetupScreen.route(
-            // TODO: pass `runStage` once the record and crypto layers land.
-            onComplete: _openMotherShell,
+          CreatePinScreen.route(
+            onCompleted: _openVaultSetup,
           ),
         );
       case UserRole.partner:
@@ -112,6 +143,15 @@ class _MaternalVaultAppState extends State<MaternalVaultApp> {
           ),
         );
     }
+  }
+
+  void _openVaultSetup() {
+    _navigator.pushReplacement(
+      VaultSetupScreen.route(
+        runStage: VaultSetupService.runStage,
+        onComplete: _openMotherShell,
+      ),
+    );
   }
 
   /// Replaces the connect screen rather than stacking on it — pairing is done
@@ -130,7 +170,16 @@ class _MaternalVaultAppState extends State<MaternalVaultApp> {
 
   /// Replaces setup rather than stacking on it — the vault is built by now and
   /// there is nothing to return to.
-  void _openMotherShell() {
+  void _openMotherShell() async {
+    // 🔍 Database Verification Check
+    final bool fileExists = await EncryptedDatabaseHelper.doesDatabaseExist();
+    debugPrint('📂 Database file exists on disk: $fileExists');
+    final List<String> tables =
+        await EncryptedDatabaseHelper.getCreatedTables();
+    debugPrint('📋 Created tables: $tables');
+    final records = await EncryptedDatabaseHelper.getMotherProfiles();
+    debugPrint('👤 Records in mother_profile (${records.length}): $records');
+
     _navigator.pushReplacement(
       MotherShellScreen.route(
         onLanguageChanged: (AppLanguage next) => _locale.language = next,
