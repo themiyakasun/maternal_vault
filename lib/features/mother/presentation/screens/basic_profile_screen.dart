@@ -30,9 +30,13 @@ import '../../domain/key_vitals.dart';
 class BasicProfileScreen extends StatefulWidget {
   const BasicProfileScreen({
     super.key,
+    this.profile = const BasicProfile.empty(),
     this.vitals = const KeyVitals.empty(),
     this.onSubmit,
   });
+
+  /// The profile details to display and edit.
+  final BasicProfile profile;
 
   /// What the summary tiles render. Defaults to a record with nothing measured.
   final KeyVitals vitals;
@@ -53,19 +57,113 @@ class _BasicProfileScreenState extends State<BasicProfileScreen> {
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _registrationNumber = TextEditingController();
-  final TextEditingController _motherName = TextEditingController();
-  final TextEditingController _nationalId = TextEditingController();
-  final TextEditingController _address = TextEditingController();
-  final TextEditingController _phone = TextEditingController();
-  final TextEditingController _motherAge = TextEditingController();
-  final TextEditingController _motherOccupation = TextEditingController();
-  final TextEditingController _fatherAge = TextEditingController();
-  final TextEditingController _fatherOccupation = TextEditingController();
+  late final TextEditingController _registrationNumber;
+  late final TextEditingController _motherName;
+  late final TextEditingController _nationalId;
+  late final TextEditingController _address;
+  late final TextEditingController _phone;
+  late final TextEditingController _motherAge;
+  late final TextEditingController _motherOccupation;
+  late final TextEditingController _fatherAge;
+  late final TextEditingController _fatherOccupation;
+
+  late final TextEditingController _mohArea;
+  late final TextEditingController _phmArea;
+  late final TextEditingController _gramaNiladari;
+  late final TextEditingController _clinicName;
+  late final TextEditingController _otherClinics;
+  late final TextEditingController _eligibleFamilyNumber;
+  late final TextEditingController _emergencyPerson;
+  late final TextEditingController _emergencyPhone;
+  late final TextEditingController _emergencyAddress;
+  late final TextEditingController _mohPhone;
+  late final TextEditingController _phmPhone;
 
   DateTime? _registrationDate;
+  DateTime? _eligibleFamilyDate;
   EducationLevel? _motherEducation;
   EducationLevel? _fatherEducation;
+
+  @override
+  void initState() {
+    super.initState();
+    final BasicProfile p = widget.profile;
+    _registrationNumber = TextEditingController(text: p.registrationNumber ?? '');
+    _motherName = TextEditingController(text: p.motherName);
+    _nationalId = TextEditingController(text: p.nationalId ?? '');
+    _address = TextEditingController(text: p.address ?? '');
+    _phone = TextEditingController(text: p.phoneNumber ?? '');
+    _motherAge = TextEditingController(
+      text: p.mother.age?.toString() ?? '',
+    );
+    _motherOccupation = TextEditingController(text: p.mother.occupation ?? '');
+    _fatherAge = TextEditingController(
+      text: p.father.age?.toString() ?? '',
+    );
+    _fatherOccupation = TextEditingController(text: p.father.occupation ?? '');
+
+    _mohArea = TextEditingController(text: p.mohArea ?? '');
+    _phmArea = TextEditingController(text: p.phmArea ?? '');
+    _gramaNiladari = TextEditingController(text: p.gramaNiladariDivision ?? '');
+    _clinicName = TextEditingController(text: p.clinicName ?? '');
+    _otherClinics = TextEditingController(text: p.otherClinics ?? '');
+    _eligibleFamilyNumber = TextEditingController(
+      text: p.eligibleFamilyRegisterNumber ?? '',
+    );
+    _emergencyPerson = TextEditingController(
+      text: p.emergencyContactPerson ?? '',
+    );
+    _emergencyPhone = TextEditingController(
+      text: p.emergencyContactPhone ?? '',
+    );
+    _emergencyAddress = TextEditingController(
+      text: p.emergencyContactAddress ?? '',
+    );
+    _mohPhone = TextEditingController(text: p.mohOfficePhone ?? '');
+    _phmPhone = TextEditingController(text: p.phmPhone ?? '');
+
+    _registrationDate = p.registrationDate;
+    _eligibleFamilyDate = p.eligibleFamilyRegisterDate;
+    _motherEducation = p.mother.education;
+    _fatherEducation = p.father.education;
+  }
+
+  @override
+  void didUpdateWidget(BasicProfileScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.profile != oldWidget.profile ||
+        widget.vitals != oldWidget.vitals) {
+      setState(() {
+        final BasicProfile p = widget.profile;
+        _registrationNumber.text = p.registrationNumber ?? '';
+        _motherName.text = p.motherName;
+        _nationalId.text = p.nationalId ?? '';
+        _address.text = p.address ?? '';
+        _phone.text = p.phoneNumber ?? '';
+        _motherAge.text = p.mother.age?.toString() ?? '';
+        _motherOccupation.text = p.mother.occupation ?? '';
+        _fatherAge.text = p.father.age?.toString() ?? '';
+        _fatherOccupation.text = p.father.occupation ?? '';
+
+        _mohArea.text = p.mohArea ?? '';
+        _phmArea.text = p.phmArea ?? '';
+        _gramaNiladari.text = p.gramaNiladariDivision ?? '';
+        _clinicName.text = p.clinicName ?? '';
+        _otherClinics.text = p.otherClinics ?? '';
+        _eligibleFamilyNumber.text = p.eligibleFamilyRegisterNumber ?? '';
+        _emergencyPerson.text = p.emergencyContactPerson ?? '';
+        _emergencyPhone.text = p.emergencyContactPhone ?? '';
+        _emergencyAddress.text = p.emergencyContactAddress ?? '';
+        _mohPhone.text = p.mohOfficePhone ?? '';
+        _phmPhone.text = p.phmPhone ?? '';
+
+        _registrationDate = p.registrationDate;
+        _eligibleFamilyDate = p.eligibleFamilyRegisterDate;
+        _motherEducation = p.mother.education;
+        _fatherEducation = p.father.education;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -79,6 +177,17 @@ class _BasicProfileScreenState extends State<BasicProfileScreen> {
       _motherOccupation,
       _fatherAge,
       _fatherOccupation,
+      _mohArea,
+      _phmArea,
+      _gramaNiladari,
+      _clinicName,
+      _otherClinics,
+      _eligibleFamilyNumber,
+      _emergencyPerson,
+      _emergencyPhone,
+      _emergencyAddress,
+      _mohPhone,
+      _phmPhone,
     ]) {
       controller.dispose();
     }
@@ -114,6 +223,10 @@ class _BasicProfileScreenState extends State<BasicProfileScreen> {
             _demographics(l10n),
             const SizedBox(height: AppSpacing.componentGap),
             _personalInformation(l10n),
+            const SizedBox(height: AppSpacing.componentGap),
+            _administrativeDetails(l10n),
+            const SizedBox(height: AppSpacing.componentGap),
+            _emergencyContacts(l10n),
             const SizedBox(height: AppSpacing.sectionGap),
             Align(
               alignment: Alignment.centerRight,
@@ -359,6 +472,18 @@ class _BasicProfileScreenState extends State<BasicProfileScreen> {
         education: _fatherEducation,
         occupation: _trimmedOrNull(_fatherOccupation),
       ),
+      mohArea: _trimmedOrNull(_mohArea),
+      phmArea: _trimmedOrNull(_phmArea),
+      gramaNiladariDivision: _trimmedOrNull(_gramaNiladari),
+      clinicName: _trimmedOrNull(_clinicName),
+      otherClinics: _trimmedOrNull(_otherClinics),
+      eligibleFamilyRegisterNumber: _trimmedOrNull(_eligibleFamilyNumber),
+      eligibleFamilyRegisterDate: _eligibleFamilyDate,
+      emergencyContactPerson: _trimmedOrNull(_emergencyPerson),
+      emergencyContactPhone: _trimmedOrNull(_emergencyPhone),
+      emergencyContactAddress: _trimmedOrNull(_emergencyAddress),
+      mohOfficePhone: _trimmedOrNull(_mohPhone),
+      phmPhone: _trimmedOrNull(_phmPhone),
     );
 
     final ValueChanged<BasicProfile>? onSubmit = widget.onSubmit;
@@ -372,6 +497,99 @@ class _BasicProfileScreenState extends State<BasicProfileScreen> {
       SnackBar(
         content: Text(AppLocalizations.of(context).profileSaveNotConnected),
       ),
+    );
+  }
+
+  Widget _administrativeDetails(AppLocalizations l10n) {
+    return SectionCard(
+      icon: Icons.apartment_rounded,
+      title: l10n.sectionAdministrative,
+      accent: AppColors.tertiary,
+      children: <Widget>[
+        AppTextField(
+          label: l10n.fieldMohArea,
+          hint: l10n.fieldMohAreaHint,
+          controller: _mohArea,
+          textCapitalization: TextCapitalization.words,
+        ),
+        AppTextField(
+          label: l10n.fieldPhmArea,
+          hint: l10n.fieldPhmAreaHint,
+          controller: _phmArea,
+          textCapitalization: TextCapitalization.words,
+        ),
+        AppTextField(
+          label: l10n.fieldGramaNiladari,
+          hint: l10n.fieldGramaNiladariHint,
+          controller: _gramaNiladari,
+          textCapitalization: TextCapitalization.characters,
+        ),
+        AppTextField(
+          label: l10n.fieldClinicName,
+          hint: l10n.fieldClinicNameHint,
+          controller: _clinicName,
+          textCapitalization: TextCapitalization.words,
+        ),
+        AppTextField(
+          label: l10n.fieldOtherClinics,
+          hint: l10n.fieldOtherClinicsHint,
+          controller: _otherClinics,
+          textCapitalization: TextCapitalization.sentences,
+        ),
+        AppTextField(
+          label: l10n.fieldEligibleFamilyNo,
+          hint: l10n.fieldEligibleFamilyNoHint,
+          controller: _eligibleFamilyNumber,
+          textCapitalization: TextCapitalization.characters,
+        ),
+        AppDateField(
+          label: l10n.fieldEligibleFamilyDate,
+          hint: l10n.hintPickDate,
+          value: _eligibleFamilyDate,
+          onChanged: (DateTime? next) =>
+              setState(() => _eligibleFamilyDate = next),
+        ),
+      ],
+    );
+  }
+
+  Widget _emergencyContacts(AppLocalizations l10n) {
+    return SectionCard(
+      icon: Icons.contact_phone_outlined,
+      title: l10n.sectionEmergencyContacts,
+      accent: AppColors.error,
+      children: <Widget>[
+        AppTextField(
+          label: l10n.fieldEmergencyContactPerson,
+          hint: l10n.fieldEmergencyContactPersonHint,
+          controller: _emergencyPerson,
+          textCapitalization: TextCapitalization.words,
+        ),
+        AppTextField(
+          label: l10n.fieldEmergencyContactPhone,
+          hint: l10n.fieldPhoneHint,
+          controller: _emergencyPhone,
+          keyboardType: TextInputType.phone,
+        ),
+        AppTextField(
+          label: l10n.fieldEmergencyContactAddress,
+          hint: l10n.fieldEmergencyContactAddressHint,
+          controller: _emergencyAddress,
+          textCapitalization: TextCapitalization.words,
+        ),
+        AppTextField(
+          label: l10n.fieldMohPhone,
+          hint: l10n.fieldPhoneHint,
+          controller: _mohPhone,
+          keyboardType: TextInputType.phone,
+        ),
+        AppTextField(
+          label: l10n.fieldPhmPhone,
+          hint: l10n.fieldPhoneHint,
+          controller: _phmPhone,
+          keyboardType: TextInputType.phone,
+        ),
+      ],
     );
   }
 

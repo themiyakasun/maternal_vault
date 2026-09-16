@@ -13,6 +13,15 @@ class KeyVitals {
   /// Nothing measured yet — what a freshly created vault holds.
   const KeyVitals.empty() : this();
 
+  /// Sample vitals for preview or defaults.
+  const KeyVitals.sample()
+      : this(
+          bloodGroup: 'B+',
+          bmi: '21.4',
+          heightCm: '158',
+          allergies: 'None',
+        );
+
   /// ABO group and rhesus factor, e.g. `O+`. Free text rather than an enum
   /// because it is transcribed from a lab report.
   final String? bloodGroup;
@@ -26,4 +35,22 @@ class KeyVitals {
 
   /// Known allergies, or a translated "none" once someone has actually asked.
   final String? allergies;
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'bloodGroup': bloodGroup,
+      'bmi': bmi,
+      'heightCm': heightCm,
+      'allergies': allergies,
+    };
+  }
+
+  factory KeyVitals.fromJson(Map<String, dynamic> json) {
+    return KeyVitals(
+      bloodGroup: json['bloodGroup'] as String?,
+      bmi: json['bmi'] as String?,
+      heightCm: json['heightCm'] as String?,
+      allergies: json['allergies'] as String?,
+    );
+  }
 }

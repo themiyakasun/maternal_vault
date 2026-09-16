@@ -46,6 +46,9 @@ class _PastPregnancySheetState extends State<_PastPregnancySheet> {
   final TextEditingController _year = TextEditingController();
   final TextEditingController _weight = TextEditingController();
   final TextEditingController _age = TextEditingController();
+  final TextEditingController _placeOfDelivery = TextEditingController();
+  final TextEditingController _antenatalComplications = TextEditingController();
+  final TextEditingController _postnatalComplications = TextEditingController();
 
   PregnancyTerm? _term;
   DeliveryMode? _deliveryMode;
@@ -63,6 +66,9 @@ class _PastPregnancySheetState extends State<_PastPregnancySheet> {
     _year.dispose();
     _weight.dispose();
     _age.dispose();
+    _placeOfDelivery.dispose();
+    _antenatalComplications.dispose();
+    _postnatalComplications.dispose();
     super.dispose();
   }
 
@@ -198,6 +204,27 @@ class _PastPregnancySheetState extends State<_PastPregnancySheet> {
                   ),
                 ],
               ),
+              const SizedBox(height: AppSpacing.componentGap),
+              AppTextField(
+                label: l10n.fieldPlaceOfDelivery,
+                hint: l10n.fieldPlaceOfDeliveryHint,
+                controller: _placeOfDelivery,
+                textCapitalization: TextCapitalization.words,
+              ),
+              const SizedBox(height: AppSpacing.componentGap),
+              AppTextField(
+                label: l10n.fieldAntenatalComplications,
+                hint: l10n.fieldAntenatalComplicationsHint,
+                controller: _antenatalComplications,
+                textCapitalization: TextCapitalization.sentences,
+              ),
+              const SizedBox(height: AppSpacing.componentGap),
+              AppTextField(
+                label: l10n.fieldPostnatalComplications,
+                hint: l10n.fieldPostnatalComplicationsHint,
+                controller: _postnatalComplications,
+                textCapitalization: TextCapitalization.sentences,
+              ),
               const SizedBox(height: AppSpacing.stackLg),
               Row(
                 children: <Widget>[
@@ -264,6 +291,9 @@ class _PastPregnancySheetState extends State<_PastPregnancySheet> {
         birthWeightKg: double.tryParse(_weight.text.trim()),
         sex: _sex,
         ageYears: int.tryParse(_age.text.trim()),
+        placeOfDelivery: _placeOfDelivery.text.trim().isEmpty ? null : _placeOfDelivery.text.trim(),
+        antenatalComplications: _antenatalComplications.text.trim().isEmpty ? null : _antenatalComplications.text.trim(),
+        postnatalComplications: _postnatalComplications.text.trim().isEmpty ? null : _postnatalComplications.text.trim(),
       ),
     );
   }

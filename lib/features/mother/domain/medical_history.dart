@@ -9,9 +9,10 @@ enum FamilyCondition {
   diabetesMellitus,
   hypertension,
 
-  /// Thalassaemia, sickle cell, clotting disorders — asked as one question
-  /// because the follow-up happens at the clinic, not in this form.
+  /// Thalassaemia, sickle cell, clotting disorders.
   haematological,
+
+  other,
 }
 
 /// A condition the mother herself has been diagnosed with or treated for.
@@ -20,28 +21,31 @@ enum PersonalCondition {
   hypertension,
   cardiac,
   renal,
-
-  /// Liver disease.
   hepatic,
+  psychiatric,
+  epilepsy,
+  malignancies,
+  haematological,
+  tuberculosis,
+  thyroid,
+  bronchialAsthma,
+  previousDvt,
 
-  /// Any past operation. Broad on purpose — the detail belongs in a note, not in
-  /// a yes/no.
+  /// Any past operation other than Caesarean (LSCS).
   surgeries,
+
+  socialRiskFactors,
+  other,
 }
 
 /// What the mother has answered on the history screen.
-///
-/// Sets rather than a field per condition: adding a condition is then one enum
-/// value and one label, instead of a new boolean threaded through the model, the
-/// screen and every constructor call. Absent from the set means "not reported" —
-/// which for a form nobody has opened yet is the same as unanswered, and that is
-/// deliberately not distinguished from "no" here. A clinician reads an unticked
-/// box the same way.
 @immutable
 class MedicalHistory {
   const MedicalHistory({
     this.family = const <FamilyCondition>{},
     this.personal = const <PersonalCondition>{},
+    this.familyOtherDetails,
+    this.personalOtherDetails,
   });
 
   /// Nothing reported.
@@ -49,13 +53,13 @@ class MedicalHistory {
 
   final Set<FamilyCondition> family;
   final Set<PersonalCondition> personal;
+  final String? familyOtherDetails;
+  final String? personalOtherDetails;
 
   bool hasFamily(FamilyCondition condition) => family.contains(condition);
 
   bool hasPersonal(PersonalCondition condition) => personal.contains(condition);
 
-  /// A copy with [condition] reported or withdrawn. Copy-on-write, so the value
-  /// handed to a caller can never be mutated behind their back.
   MedicalHistory withFamily(FamilyCondition condition, {required bool present}) {
     final Set<FamilyCondition> next = <FamilyCondition>{...family};
     if (present) {
@@ -63,10 +67,14 @@ class MedicalHistory {
     } else {
       next.remove(condition);
     }
-    return MedicalHistory(family: next, personal: personal);
+    return MedicalHistory(
+      family: next,
+      personal: personal,
+      familyOtherDetails: familyOtherDetails,
+      personalOtherDetails: personalOtherDetails,
+    );
   }
 
-  /// A copy with [condition] reported or withdrawn.
   MedicalHistory withPersonal(
     PersonalCondition condition, {
     required bool present,
@@ -77,6 +85,56 @@ class MedicalHistory {
     } else {
       next.remove(condition);
     }
-    return MedicalHistory(family: family, personal: next);
+    return MedicalHistory(
+      family: family,
+      personal: next,
+      familyOtherDetails: familyOtherDetails,
+      personalOtherDetails: personalOtherDetails,
+    );
+  }
+
+  MedicalHistory copyWith({
+    Set<FamilyCondition>? family,
+    Set<PersonalCondition>? personal,
+    String? familyOtherDetails,
+    String? personalOtherDetails,
+  }) {
+    return MedicalHistory(
+      family: family ?? this.family,
+      personal: personal ?? this.personal,
+      familyOtherDetails: familyOtherDetails ?? this.familyOtherDetails,
+      personalOtherDetails: personalOtherDetails ?? this.personalOtherDetails,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return <String, dynamic>{
+      'family': family.map((FamilyCondition e) => e.name).toList(),
+      'personal': personal.map((PersonalCondition e) => e.name).toList(),
+      if (familyOtherDetails != null) 'familyOtherDetails': familyOtherDetails,
+      if (personalOtherDetails != null)
+        'personalOtherDetails': personalOtherDetails,
+    };
+  }
+
+  factory MedicalHistory.fromJson(Map<String, dynamic> json) {
+    final familyList = (json['family'] as List<dynamic>?)
+            ?.map((dynamic e) => FamilyCondition.values.asNameMap()[e.toString()])
+            .whereType<FamilyCondition>()
+            .toSet() ??
+        const <FamilyCondition>{};
+    final personalList = (json['personal'] as List<dynamic>?)
+            ?.map((dynamic e) =>
+                PersonalCondition.values.asNameMap()[e.toString()])
+            .whereType<PersonalCondition>()
+            .toSet() ??
+        const <PersonalCondition>{};
+    return MedicalHistory(
+      family: familyList,
+      personal: personalList,
+      familyOtherDetails: json['familyOtherDetails'] as String?,
+      personalOtherDetails: json['personalOtherDetails'] as String?,
+    );
   }
 }
+

@@ -6,15 +6,12 @@ import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/buttons/app_primary_button.dart';
 import '../../../../core/widgets/cards/section_card.dart';
-import '../../../../core/widgets/inputs/app_date_field.dart';
+import '../../../../core/widgets/detail_grid.dart';
 import '../../../../core/widgets/inputs/app_dropdown_field.dart';
-import '../../../../core/widgets/inputs/app_stepper_field.dart';
-import '../../../../core/widgets/inputs/app_switch_tile.dart';
 import '../../../../core/widgets/inputs/app_text_field.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../domain/delivery_plan.dart';
 import '../../domain/family_planning_method.dart';
-import '../../domain/obstetric_history.dart';
 import '../../domain/transport_mode.dart';
 import '../widgets/obstetric_labels.dart';
 import '../widgets/plan_labels.dart';
@@ -47,16 +44,9 @@ class _PlanScreenState extends State<PlanScreen> {
   late final TextEditingController _transportCost;
   late final TextEditingController _distance;
   late final TextEditingController _estTime;
-  late final TextEditingController _birthWeight;
-  late final TextEditingController _complications;
 
-  late DateTime? _dateOfBirth = widget.plan.dateOfBirth;
   late TransportMode? _transportMode = widget.plan.transportMode;
-  late DeliveryMode? _deliveryMode = widget.plan.deliveryMode;
   late FamilyPlanningMethod? _familyPlanning = widget.plan.familyPlanningMethod;
-  late bool _episiotomy = widget.plan.episiotomy;
-  late int? _apgarOne = widget.plan.apgarOneMinute;
-  late int? _apgarFive = widget.plan.apgarFiveMinutes;
 
   /// Wide bounds — these catch a slipped digit, not a clinician's judgement.
   static const int _minCost = 0;
@@ -65,8 +55,6 @@ class _PlanScreenState extends State<PlanScreen> {
   static const int _maxDistance = 1000;
   static const int _minMinutes = 0;
   static const int _maxMinutes = 1440;
-  static const int _minWeightKg = 0;
-  static const int _maxWeightKg = 10;
 
   @override
   void initState() {
@@ -80,10 +68,22 @@ class _PlanScreenState extends State<PlanScreen> {
     _estTime = TextEditingController(
       text: plan.estimatedTimeMinutes?.toString() ?? '',
     );
-    _birthWeight = TextEditingController(
-      text: plan.birthWeightKg?.toString() ?? '',
-    );
-    _complications = TextEditingController(text: plan.complications ?? '');
+  }
+
+  @override
+  void didUpdateWidget(PlanScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.plan != oldWidget.plan) {
+      setState(() {
+        final DeliveryPlan plan = widget.plan;
+        _hospital.text = plan.intendedHospital ?? '';
+        _transportCost.text = plan.transportCostEstimate?.toString() ?? '';
+        _distance.text = plan.distanceKm?.toString() ?? '';
+        _estTime.text = plan.estimatedTimeMinutes?.toString() ?? '';
+        _transportMode = plan.transportMode;
+        _familyPlanning = plan.familyPlanningMethod;
+      });
+    }
   }
 
   @override
@@ -93,8 +93,6 @@ class _PlanScreenState extends State<PlanScreen> {
       _transportCost,
       _distance,
       _estTime,
-      _birthWeight,
-      _complications,
     ]) {
       controller.dispose();
     }
@@ -119,9 +117,19 @@ class _PlanScreenState extends State<PlanScreen> {
           children: <Widget>[
             _emergencyPlan(l10n),
             const SizedBox(height: AppSpacing.componentGap),
-            _deliverySummary(l10n),
+            _deliverySummary(context, l10n),
+            const SizedBox(height: AppSpacing.componentGap),
+            _dischargeChecklistSection(context, l10n),
+            const SizedBox(height: AppSpacing.componentGap),
+            _postpartumFieldCareSection(context, l10n),
+            const SizedBox(height: AppSpacing.componentGap),
+            _postpartumClinicCareSection(l10n),
             const SizedBox(height: AppSpacing.componentGap),
             _familyPlanningSection(l10n),
+            const SizedBox(height: AppSpacing.componentGap),
+            _antenatalClassesSection(l10n),
+            const SizedBox(height: AppSpacing.componentGap),
+            _breastfeedingDirectivesCard(l10n),
             const SizedBox(height: AppSpacing.sectionGap),
             AppPrimaryButton(
               label: l10n.actionSavePlan,
@@ -130,6 +138,35 @@ class _PlanScreenState extends State<PlanScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  String? _formatDate(MaterialLocalizations material, DateTime? date) {
+    if (date == null) return null;
+    return '${material.formatShortMonthDay(date)}, ${material.formatYear(date)}';
+  }
+
+  Widget _checklistRow({required String label, required bool checked}) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: AppSpacing.unit / 2),
+      child: Row(
+        children: <Widget>[
+          Icon(
+            checked
+                ? Icons.check_circle_rounded
+                : Icons.remove_circle_outline_rounded,
+            color: checked ? AppColors.health : AppColors.outline,
+            size: 20,
+          ),
+          const SizedBox(width: AppSpacing.stackSm),
+          Expanded(
+            child: Text(
+              label,
+              style: AppTextStyles.bodyLg,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -207,113 +244,182 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  Widget _deliverySummary(AppLocalizations l10n) {
+  Widget _deliverySummary(BuildContext context, AppLocalizations l10n) {
+    final MaterialLocalizations material = MaterialLocalizations.of(context);
+    final DeliveryPlan plan = widget.plan;
+
     return SectionCard(
       icon: Icons.child_care_outlined,
       title: l10n.sectionDeliverySummary,
       accent: AppColors.secondary,
       children: <Widget>[
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: <Widget>[
-            Expanded(
-              child: AppTextField(
-                label: l10n.fieldBirthWeight,
-                controller: _birthWeight,
-                keyboardType: const TextInputType.numberWithOptions(
-                  decimal: true,
-                ),
-                suffixText: l10n.unitKilograms,
-                validator: (String? raw) => _range(
-                  l10n,
-                  raw,
-                  _minWeightKg,
-                  _maxWeightKg,
-                  decimal: true,
-                ),
-              ),
+        DetailGrid(
+          items: <DetailPair>[
+            DetailPair(
+              label: l10n.fieldDeliveryHospital,
+              value: plan.deliveryHospital,
             ),
-            const SizedBox(width: AppSpacing.componentGap),
-            Expanded(
-              child: AppDateField(
-                label: l10n.fieldDateOfBirth,
-                hint: l10n.hintPickDate,
-                value: _dateOfBirth,
-                // A birth is not in the future; the delivery half is filled on
-                // the day, not booked ahead.
-                lastDate: DateTime.now(),
-                onChanged: (DateTime? next) =>
-                    setState(() => _dateOfBirth = next),
-              ),
+            DetailPair(
+              label: l10n.fieldPoaAtDelivery,
+              value: plan.poaAtDeliveryWeeks != null
+                  ? l10n.weeksShort(plan.poaAtDeliveryWeeks!)
+                  : null,
+            ),
+            DetailPair(
+              label: l10n.fieldBirthWeight,
+              value: plan.birthWeightKg != null
+                  ? '${plan.birthWeightKg} ${l10n.unitKilograms}'
+                  : null,
+            ),
+            DetailPair(
+              label: l10n.fieldDateOfBirth,
+              value: _formatDate(material, plan.dateOfBirth),
+            ),
+            DetailPair(
+              label: l10n.fieldModeOfDelivery,
+              value: plan.deliveryMode != null
+                  ? deliveryModeLabel(l10n, plan.deliveryMode!)
+                  : null,
             ),
           ],
         ),
-        AppDropdownField<DeliveryMode>(
-          label: l10n.fieldModeOfDelivery,
-          hint: l10n.hintSelectMode,
-          value: _deliveryMode,
-          items: <AppDropdownItem<DeliveryMode>>[
-            for (final DeliveryMode mode in DeliveryMode.values)
-              AppDropdownItem<DeliveryMode>(
-                value: mode,
-                label: deliveryModeLabel(l10n, mode),
-              ),
-          ],
-          onChanged: (DeliveryMode? next) =>
-              setState(() => _deliveryMode = next),
-        ),
-        AppSwitchTile(
+        const SizedBox(height: AppSpacing.unit),
+        _checklistRow(
           label: l10n.fieldEpisiotomy,
-          value: _episiotomy,
-          onChanged: (bool next) => setState(() => _episiotomy = next),
+          checked: plan.episiotomy,
         ),
-        AppTextField(
-          label: l10n.fieldComplications,
-          hint: l10n.fieldComplicationsHint,
-          controller: _complications,
-          minLines: 3,
-          maxLines: 5,
-          textCapitalization: TextCapitalization.sentences,
+        if (plan.complications != null && plan.complications!.isNotEmpty) ...<Widget>[
+          const SizedBox(height: AppSpacing.componentGap),
+          DetailGrid(
+            columns: 1,
+            items: <DetailPair>[
+              DetailPair(
+                label: l10n.fieldComplications,
+                value: plan.complications,
+              ),
+            ],
+          ),
+        ],
+        const Divider(),
+        DetailGrid(
+          items: <DetailPair>[
+            DetailPair(
+              label: 'Apgar (${l10n.apgarOneMinute})',
+              value: plan.apgarOneMinute?.toString(),
+            ),
+            DetailPair(
+              label: 'Apgar (${l10n.apgarFiveMinutes})',
+              value: plan.apgarFiveMinutes?.toString(),
+            ),
+            DetailPair(
+              label: 'Apgar (${l10n.apgarTenMinutes})',
+              value: plan.apgarTenMinutes?.toString(),
+            ),
+          ],
         ),
-        _apgar(l10n),
       ],
     );
   }
 
-  /// The two scores under one caption, split by a slash the way the clinic card
-  /// writes them.
-  Widget _apgar(AppLocalizations l10n) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+  Widget _dischargeChecklistSection(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) {
+    final MaterialLocalizations material = MaterialLocalizations.of(context);
+    final DischargeChecklist checklist = widget.plan.dischargeChecklist;
+
+    final List<(String, bool)> items = <(String, bool)>[
+      (l10n.fieldTempNormal48h, checklist.tempNormal48h),
+      (l10n.fieldPacksChecked, checklist.packsChecked),
+      (l10n.fieldInfectionFree, checklist.infectionFree),
+      (l10n.fieldFpDiscussed, checklist.fpDiscussed),
+      (l10n.fieldDangerSignalsExplained, checklist.dangerSignalsExplained),
+      (l10n.fieldBreastfeedingEstablished, checklist.breastfeedingEstablished),
+      (l10n.fieldVitAGiven, checklist.vitAGiven),
+      (l10n.fieldRubellaGiven, checklist.rubellaGiven),
+      (l10n.fieldAntiDGiven, checklist.antiDGiven),
+      (l10n.fieldDiagnosisCardIssued, checklist.diagnosisCardIssued),
+      (l10n.fieldChdrHandedOver, checklist.chdrHandedOver),
+      (l10n.fieldPrescriptionIssued, checklist.prescriptionIssued),
+      (l10n.fieldReferredToPhm, checklist.referredToPhm),
+    ];
+
+    return SectionCard(
+      icon: Icons.checklist_rtl_outlined,
+      title: l10n.sectionDischargeChecklist,
+      accent: AppColors.health,
       children: <Widget>[
-        Text(
-          l10n.fieldApgarScore,
-          style: AppTextStyles.bodySm.copyWith(
-            color: AppColors.onSurfaceVariant,
-          ),
+        for (final (String label, bool checked) in items)
+          _checklistRow(label: label, checked: checked),
+        const Divider(),
+        DetailGrid(
+          columns: 1,
+          items: <DetailPair>[
+            DetailPair(
+              label: l10n.fieldDischargeDate,
+              value: _formatDate(material, checklist.dischargeDate),
+            ),
+          ],
         ),
-        const SizedBox(height: AppSpacing.stackSm),
-        Row(
-          children: <Widget>[
-            Expanded(
-              child: AppStepperField(
-                hint: l10n.apgarOneMinute,
-                value: _apgarOne,
-                onChanged: (int? next) => setState(() => _apgarOne = next),
-              ),
+      ],
+    );
+  }
+
+  Widget _postpartumFieldCareSection(
+    BuildContext context,
+    AppLocalizations l10n,
+  ) {
+    final MaterialLocalizations material = MaterialLocalizations.of(context);
+    final PostpartumCare care = widget.plan.postpartumCare;
+
+    return SectionCard(
+      icon: Icons.home_work_outlined,
+      title: l10n.sectionPostpartumFieldCare,
+      accent: AppColors.primary,
+      children: <Widget>[
+        DetailGrid(
+          items: <DetailPair>[
+            DetailPair(
+              label: l10n.fieldPhmVisitDate,
+              value: _formatDate(material, care.phmVisitDate),
             ),
-            Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: AppSpacing.stackSm,
-              ),
-              child: Text('/', style: AppTextStyles.bodyLg),
+            DetailPair(
+              label: l10n.fieldMicronutrientsDate,
+              value: _formatDate(material, care.micronutrientsDate),
             ),
-            Expanded(
-              child: AppStepperField(
-                hint: l10n.apgarFiveMinutes,
-                value: _apgarFive,
-                onChanged: (int? next) => setState(() => _apgarFive = next),
+          ],
+        ),
+        if (care.postpartumClinicSchedule != null &&
+            care.postpartumClinicSchedule!.isNotEmpty) ...<Widget>[
+          const SizedBox(height: AppSpacing.componentGap),
+          DetailGrid(
+            columns: 1,
+            items: <DetailPair>[
+              DetailPair(
+                label: l10n.fieldPostpartumClinicSchedule,
+                value: care.postpartumClinicSchedule,
               ),
+            ],
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _postpartumClinicCareSection(AppLocalizations l10n) {
+    final PostpartumCare care = widget.plan.postpartumCare;
+
+    return SectionCard(
+      icon: Icons.local_hospital_outlined,
+      title: l10n.sectionPostpartumClinicCare,
+      accent: AppColors.secondary,
+      children: <Widget>[
+        DetailGrid(
+          columns: 1,
+          items: <DetailPair>[
+            DetailPair(
+              label: l10n.fieldPostpartumMorbidities,
+              value: care.postpartumMorbidities,
             ),
           ],
         ),
@@ -346,19 +452,102 @@ class _PlanScreenState extends State<PlanScreen> {
     );
   }
 
-  /// Empty is fine — this only judges what was actually typed. Whole numbers
-  /// unless [decimal], because the field behind it stores an int.
+  Widget _antenatalClassesSection(AppLocalizations l10n) {
+    final AntenatalEducation edu = widget.plan.antenatalEducation;
+
+    return SectionCard(
+      icon: Icons.menu_book_outlined,
+      title: l10n.sectionAntenatalClasses,
+      accent: AppColors.tertiary,
+      children: <Widget>[
+        _checklistRow(
+          label: l10n.fieldAntenatalClassTrimester(1),
+          checked: edu.classTrimester1,
+        ),
+        _checklistRow(
+          label: l10n.fieldAntenatalClassTrimester(2),
+          checked: edu.classTrimester2,
+        ),
+        _checklistRow(
+          label: l10n.fieldAntenatalClassTrimester(3),
+          checked: edu.classTrimester3,
+        ),
+        const Divider(),
+        _checklistRow(
+          label: l10n.fieldIecBookAntenatal,
+          checked: edu.bookAntenatal,
+        ),
+        _checklistRow(
+          label: l10n.fieldIecBookBreastfeeding,
+          checked: edu.bookBreastfeeding,
+        ),
+        _checklistRow(
+          label: l10n.fieldIecBookEccd,
+          checked: edu.bookEccd,
+        ),
+        _checklistRow(
+          label: l10n.fieldIecLeafletFp,
+          checked: edu.leafletFp,
+        ),
+      ],
+    );
+  }
+
+  Widget _breastfeedingDirectivesCard(AppLocalizations l10n) {
+    return SectionCard(
+      icon: Icons.verified_user_outlined,
+      title: l10n.guidanceBreastfeedingTitle,
+      accent: AppColors.primary,
+      children: <Widget>[
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Icon(
+              Icons.check_circle_outline,
+              size: 20,
+              color: AppColors.primary,
+            ),
+            const SizedBox(width: AppSpacing.stackSm),
+            Expanded(
+              child: Text(
+                l10n.guidanceBreastfeeding1,
+                style: AppTextStyles.bodyLg,
+              ),
+            ),
+          ],
+        ),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            const Icon(
+              Icons.check_circle_outline,
+              size: 20,
+              color: AppColors.primary,
+            ),
+            const SizedBox(width: AppSpacing.stackSm),
+            Expanded(
+              child: Text(
+                l10n.guidanceBreastfeeding2,
+                style: AppTextStyles.bodyLg,
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  /// Empty is fine — this only judges what was actually typed.
   String? _range(
     AppLocalizations l10n,
     String? raw,
     int min,
-    int max, {
-    bool decimal = false,
-  }) {
+    int max,
+  ) {
     final String value = raw?.trim() ?? '';
     if (value.isEmpty) return null;
 
-    final num? number = decimal ? double.tryParse(value) : int.tryParse(value);
+    final int? number = int.tryParse(value);
     if (number == null || number < min || number > max) {
       return l10n.validationNumberRange(min, max);
     }
@@ -372,19 +561,12 @@ class _PlanScreenState extends State<PlanScreen> {
 
     if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final DeliveryPlan plan = DeliveryPlan(
+    final DeliveryPlan plan = widget.plan.copyWith(
       intendedHospital: _trimmedOrNull(_hospital),
       transportMode: _transportMode,
       transportCostEstimate: int.tryParse(_transportCost.text.trim()),
       distanceKm: int.tryParse(_distance.text.trim()),
       estimatedTimeMinutes: int.tryParse(_estTime.text.trim()),
-      birthWeightKg: double.tryParse(_birthWeight.text.trim()),
-      dateOfBirth: _dateOfBirth,
-      deliveryMode: _deliveryMode,
-      episiotomy: _episiotomy,
-      complications: _trimmedOrNull(_complications),
-      apgarOneMinute: _apgarOne,
-      apgarFiveMinutes: _apgarFive,
       familyPlanningMethod: _familyPlanning,
     );
 

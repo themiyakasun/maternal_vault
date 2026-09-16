@@ -46,3 +46,26 @@ String urineLabel(AppLocalizations l10n, UrineReading reading) {
       return '+++';
   }
 }
+
+String foetalLieLabel(AppLocalizations l10n, FoetalLie lie) {
+  switch (lie) {
+    case FoetalLie.longitudinal:
+      return l10n.lieLongitudinal;
+    case FoetalLie.transverse:
+      return l10n.lieTransverse;
+    case FoetalLie.oblique:
+      return l10n.lieOblique;
+  }
+}
+
+String foetalPresentationLabel(AppLocalizations l10n, FoetalPresentation presentation) {
+  switch (presentation) {
+    case FoetalPresentation.cephalic:
+      return l10n.presCephalic;
+    case FoetalPresentation.breech:
+      return l10n.presBreech;
+    case FoetalPresentation.shoulder:
+      return l10n.presShoulder;
+  }
+}
+

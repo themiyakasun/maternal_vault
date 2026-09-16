@@ -83,7 +83,11 @@ class AppCard extends StatelessWidget {
             : Border.all(color: borderColor!, width: borderWidth),
         boxShadow: boxShadow,
       ),
-      child: content,
+      child: Material(
+        type: MaterialType.transparency,
+        borderRadius: borderRadius,
+        child: content,
+      ),
     );
   }
 }

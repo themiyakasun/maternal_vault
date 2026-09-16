@@ -15,8 +15,11 @@ import '../widgets/pregnancy_record_app_bar.dart';
 import 'basic_profile_screen.dart';
 import 'clinic_visits_screen.dart';
 import 'medical_history_screen.dart';
+import 'midwife_sync_scanner_screen.dart';
 import 'obstetric_history_screen.dart';
 import 'plan_screen.dart';
+import '../../data/services/midwife_sync_service.dart';
+import '../../../../data/datasources/encrypted_db_helper.dart';
 
 /// The mother's app once setup is done: one header, five sections, one bottom
 /// bar.
@@ -28,6 +31,7 @@ class MotherShellScreen extends StatefulWidget {
   const MotherShellScreen({
     super.key,
     required this.onLanguageChanged,
+    this.profile = const BasicProfile.empty(),
     this.vitals = const KeyVitals.empty(),
     this.history = const MedicalHistory.empty(),
     this.obstetric = const ObstetricHistory.empty(),
@@ -44,6 +48,9 @@ class MotherShellScreen extends StatefulWidget {
   /// Asks the app root to switch languages, the same contract the welcome flow
   /// uses. The shell never stores the answer — see [_MotherShellScreenState._changeLanguage].
   final ValueChanged<AppLanguage> onLanguageChanged;
+
+  /// Passed through to [BasicProfileScreen].
+  final BasicProfile profile;
 
   /// Passed through to [BasicProfileScreen].
   final KeyVitals vitals;
@@ -83,6 +90,7 @@ class MotherShellScreen extends StatefulWidget {
   /// this to go back to.
   static Route<void> route({
     required ValueChanged<AppLanguage> onLanguageChanged,
+    BasicProfile profile = const BasicProfile.empty(),
     KeyVitals vitals = const KeyVitals.empty(),
     MedicalHistory history = const MedicalHistory.empty(),
     ObstetricHistory obstetric = const ObstetricHistory.empty(),
@@ -99,6 +107,7 @@ class MotherShellScreen extends StatefulWidget {
       reverseTransitionDuration: const Duration(milliseconds: 350),
       pageBuilder: (BuildContext context, _, _) => MotherShellScreen(
         onLanguageChanged: onLanguageChanged,
+        profile: profile,
         vitals: vitals,
         history: history,
         obstetric: obstetric,
@@ -123,6 +132,96 @@ class MotherShellScreen extends StatefulWidget {
 
 class _MotherShellScreenState extends State<MotherShellScreen> {
   late MotherTab _tab = widget.initialTab;
+  late BasicProfile _profile = widget.profile;
+  late KeyVitals _vitals = widget.vitals;
+  late MedicalHistory _history = widget.history;
+  late ObstetricHistory _obstetric = widget.obstetric;
+  late ClinicRecord _clinic = widget.clinic;
+  late DeliveryPlan _plan = widget.plan;
+  int _syncEpoch = 0;
+
+  @override
+  void didUpdateWidget(MotherShellScreen oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (widget.profile != oldWidget.profile) _profile = widget.profile;
+    if (widget.vitals != oldWidget.vitals) _vitals = widget.vitals;
+    if (widget.history != oldWidget.history) _history = widget.history;
+    if (widget.obstetric != oldWidget.obstetric) _obstetric = widget.obstetric;
+    if (widget.clinic != oldWidget.clinic) _clinic = widget.clinic;
+    if (widget.plan != oldWidget.plan) _plan = widget.plan;
+  }
+
+  Future<void> _openQrScanner() async {
+    final SyncResult? result = await Navigator.of(context).push<SyncResult>(
+      MaterialPageRoute<SyncResult>(
+        builder: (BuildContext context) => const MidwifeSyncScannerScreen(),
+      ),
+    );
+
+    // Guaranteed reload from SQLCipher database in case result was returned or popped
+    final syncedData = await EncryptedDatabaseHelper.loadSyncedData();
+    if (syncedData != null && mounted) {
+      setState(() {
+        _syncEpoch++;
+        _profile = syncedData.profile;
+        _vitals = syncedData.vitals;
+        _history = syncedData.medicalHistory;
+        _obstetric = syncedData.obstetricHistory;
+        _clinic = syncedData.clinicRecord;
+        _plan = syncedData.deliveryPlan;
+      });
+
+      widget.onSubmitProfile?.call(syncedData.profile);
+      widget.onChangeHistory?.call(syncedData.medicalHistory);
+      widget.onChangeObstetric?.call(syncedData.obstetricHistory);
+      widget.onChangeClinic?.call(syncedData.clinicRecord);
+      widget.onSavePlan?.call(syncedData.deliveryPlan);
+      return;
+    }
+
+    if (result != null && result.isSuccess && mounted) {
+      setState(() {
+        _syncEpoch++;
+        if (result.profile != null) _profile = result.profile!;
+        if (result.vitals != null) _vitals = result.vitals!;
+        if (result.medicalHistory != null) _history = result.medicalHistory!;
+        if (result.obstetricHistory != null) {
+          _obstetric = result.obstetricHistory!;
+        }
+        if (result.clinicRecord != null) _clinic = result.clinicRecord!;
+        if (result.deliveryPlan != null) _plan = result.deliveryPlan!;
+      });
+
+      if (result.profile != null) widget.onSubmitProfile?.call(result.profile!);
+      if (result.medicalHistory != null) {
+        widget.onChangeHistory?.call(result.medicalHistory!);
+      }
+      if (result.obstetricHistory != null) {
+        widget.onChangeObstetric?.call(result.obstetricHistory!);
+      }
+      if (result.clinicRecord != null) {
+        widget.onChangeClinic?.call(result.clinicRecord!);
+      }
+      if (result.deliveryPlan != null) {
+        widget.onSavePlan?.call(result.deliveryPlan!);
+      }
+    }
+  }
+
+  Future<void> _persistToDatabase() async {
+    try {
+      await EncryptedDatabaseHelper.saveSyncData(
+        profile: _profile,
+        vitals: _vitals,
+        medicalHistory: _history,
+        obstetricHistory: _obstetric,
+        clinicRecord: _clinic,
+        deliveryPlan: _plan,
+      );
+    } catch (e) {
+      debugPrint('Error auto-persisting shell state: $e');
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -143,6 +242,7 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
                 PregnancyRecordAppBar(
                   title: _headerTitle(l10n, _tab),
                   onChangeLanguage: _changeLanguage,
+                  onScanQr: _openQrScanner,
                 ),
                 Expanded(
                   // IndexedStack rather than a swap: every tab stays mounted, so
@@ -181,26 +281,56 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
     switch (tab) {
       case MotherTab.profile:
         return BasicProfileScreen(
-          vitals: widget.vitals,
-          onSubmit: widget.onSubmitProfile,
+          key: ValueKey('shell_profile_$_syncEpoch'),
+          profile: _profile,
+          vitals: _vitals,
+          onSubmit: (BasicProfile p) {
+            setState(() => _profile = p);
+            widget.onSubmitProfile?.call(p);
+            _persistToDatabase();
+          },
         );
       case MotherTab.history:
         return MedicalHistoryScreen(
-          history: widget.history,
-          onChanged: widget.onChangeHistory,
+          key: ValueKey('shell_history_$_syncEpoch'),
+          history: _history,
+          onChanged: (MedicalHistory h) {
+            setState(() => _history = h);
+            widget.onChangeHistory?.call(h);
+            _persistToDatabase();
+          },
         );
       case MotherTab.obstetric:
         return ObstetricHistoryScreen(
-          history: widget.obstetric,
-          onChanged: widget.onChangeObstetric,
+          key: ValueKey('shell_obstetric_$_syncEpoch'),
+          history: _obstetric,
+          onChanged: (ObstetricHistory o) {
+            setState(() => _obstetric = o);
+            widget.onChangeObstetric?.call(o);
+            _persistToDatabase();
+          },
         );
       case MotherTab.clinic:
         return ClinicVisitsScreen(
-          record: widget.clinic,
-          onChanged: widget.onChangeClinic,
+          key: ValueKey('shell_clinic_$_syncEpoch'),
+          record: _clinic,
+          onScanQr: _openQrScanner,
+          onChanged: (ClinicRecord c) {
+            setState(() => _clinic = c);
+            widget.onChangeClinic?.call(c);
+            _persistToDatabase();
+          },
         );
       case MotherTab.plan:
-        return PlanScreen(plan: widget.plan, onSave: widget.onSavePlan);
+        return PlanScreen(
+          key: ValueKey('shell_plan_$_syncEpoch'),
+          plan: _plan,
+          onSave: (DeliveryPlan pl) {
+            setState(() => _plan = pl);
+            widget.onSavePlan?.call(pl);
+            _persistToDatabase();
+          },
+        );
     }
   }
 

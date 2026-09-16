@@ -18,6 +18,7 @@ class PregnancyRecordAppBar extends StatelessWidget {
     required this.title,
     required this.onChangeLanguage,
     this.onOpenNotifications,
+    this.onScanQr,
   });
 
   /// What section you are in. Supplied by the shell rather than fixed here, so a
@@ -31,6 +32,9 @@ class PregnancyRecordAppBar extends StatelessWidget {
   /// TODO: build the notifications screen and pass it in. Null until then, which
   /// renders the bell disabled rather than tappable-but-inert.
   final VoidCallback? onOpenNotifications;
+
+  /// Opens the Midwife QR scanner screen to synchronize clinical records.
+  final VoidCallback? onScanQr;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +57,12 @@ class PregnancyRecordAppBar extends StatelessWidget {
               overflow: TextOverflow.ellipsis,
             ),
           ),
+          if (onScanQr != null)
+            _HeaderAction(
+              icon: Icons.qr_code_scanner_rounded,
+              label: l10n.actionScanMidwifeQr,
+              onPressed: onScanQr,
+            ),
           _HeaderAction(
             icon: Icons.language_rounded,
             label: l10n.actionChangeLanguage,

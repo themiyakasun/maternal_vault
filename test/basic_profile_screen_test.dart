@@ -204,7 +204,7 @@ void main() {
       '14 Temple Road, Kandy',
     );
     await tester.enterText(
-      find.widgetWithText(TextFormField, '07X XXX XXXX'),
+      find.widgetWithText(TextFormField, '07X XXX XXXX').first,
       '0771234567',
     );
 
@@ -215,7 +215,7 @@ void main() {
       '27',
     );
     await tester.pump();
-    await tester.enterText(find.widgetWithText(TextFormField, 'Years'), '31');
+    await tester.enterText(find.widgetWithText(TextFormField, 'Years').last, '31');
     await tester.pump();
 
     await tester.enterText(
@@ -224,7 +224,7 @@ void main() {
     );
     await tester.pump();
     await tester.enterText(
-      find.widgetWithText(TextFormField, 'e.g. Teacher'),
+      find.widgetWithText(TextFormField, 'e.g. Teacher').last,
       'Driver',
     );
     await tester.pump();

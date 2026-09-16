@@ -25,7 +25,7 @@ void main() {
   /// `IndexedStack` keeps every tab mounted and visible-but-unpainted, so finding
   /// a tab's text proves it exists, not that you are looking at it.
   int shownIndex(WidgetTester tester) =>
-      tester.widget<IndexedStack>(find.byType(IndexedStack)).index!;
+      tester.widget<IndexedStack>(find.byType(IndexedStack).first).index!;
 
   /// Taps a destination in the bottom bar. Scoped to the bar because three of the
   /// five labels are also the heading of their own placeholder.
@@ -79,33 +79,26 @@ void main() {
     expect(bell.onPressed, isNull);
   });
 
-  testWidgets('each of the other four tabs shows its own placeholder', (
+  testWidgets('each of the other four tabs renders its screen', (
     WidgetTester tester,
   ) async {
     await pumpShell(tester);
 
-    final Map<String, MotherTab> tabs = <String, MotherTab>{
-      'History': MotherTab.history,
-      'Obstetric': MotherTab.obstetric,
-      'Clinic': MotherTab.clinic,
-      'Plan': MotherTab.plan,
-    };
+    await tapTab(tester, 'History');
+    expect(shownIndex(tester), MotherTab.history.index);
+    expect(find.text('Family History'), findsOneWidget);
 
-    for (final MapEntry<String, MotherTab> entry in tabs.entries) {
-      await tapTab(tester, entry.key);
+    await tapTab(tester, 'Obstetric');
+    expect(shownIndex(tester), MotherTab.obstetric.index);
+    expect(find.text('Current History'), findsOneWidget);
 
-      expect(shownIndex(tester), entry.value.index);
-      expect(
-        tester.widget<NavigationBar>(find.byType(NavigationBar)).selectedIndex,
-        entry.value.index,
-      );
-      // The tab's own name heads its placeholder, so it is obvious which section
-      // you landed in — hence two matches for the name, bar plus body.
-      expect(find.text(entry.key), findsNWidgets(2));
-    }
+    await tapTab(tester, 'Clinic');
+    expect(shownIndex(tester), MotherTab.clinic.index);
+    expect(find.text('Routine Logs'), findsOneWidget);
 
-    // One shared "not yet" across the four, rather than four degrees of empty.
-    expect(find.text('Coming soon'), findsNWidgets(4));
+    await tapTab(tester, 'Plan');
+    expect(shownIndex(tester), MotherTab.plan.index);
+    expect(find.text('Emergency Plan'), findsOneWidget);
   });
 
   testWidgets('returning to Profile keeps its scroll position', (
@@ -113,11 +106,11 @@ void main() {
   ) async {
     await pumpShell(tester);
 
-    await tester.drag(find.byType(SingleChildScrollView), const Offset(0, -320));
+    await tester.drag(find.byType(SingleChildScrollView).first, const Offset(0, -320));
     await tester.pumpAndSettle();
 
     final ScrollableState scrollable = tester.state<ScrollableState>(
-      find.byType(Scrollable),
+      find.byType(Scrollable).first,
     );
     final double scrolled = scrollable.position.pixels;
     expect(scrolled, greaterThan(0));

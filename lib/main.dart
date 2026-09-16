@@ -9,7 +9,11 @@ import 'data/datasources/encrypted_db_helper.dart';
 import 'features/auth/presentation/screens/create_pin_screen.dart';
 import 'features/auth/presentation/screens/vault_lock_screen.dart';
 import 'features/mother/data/services/vault_setup_service.dart';
+import 'features/mother/domain/basic_profile.dart';
 import 'features/mother/domain/clinic_record.dart';
+import 'features/mother/domain/delivery_plan.dart';
+import 'features/mother/domain/key_vitals.dart';
+import 'features/mother/domain/medical_history.dart';
 import 'features/mother/domain/obstetric_history.dart';
 import 'features/mother/presentation/screens/mother_shell_screen.dart';
 import 'features/mother/presentation/screens/vault_setup_screen.dart';
@@ -177,19 +181,29 @@ class _MaternalVaultAppState extends State<MaternalVaultApp> {
     final List<String> tables =
         await EncryptedDatabaseHelper.getCreatedTables();
     debugPrint('📋 Created tables: $tables');
+    // Ensure clean state: if no midwife QR sync has been performed, wipe all tables
+    final bool hasSynced =
+        await EncryptedDatabaseHelper.hasCompletedMidwifeSync();
+    if (!hasSynced) {
+      await EncryptedDatabaseHelper.clearAllData();
+    }
+
     final records = await EncryptedDatabaseHelper.getMotherProfiles();
     debugPrint('👤 Records in mother_profile (${records.length}): $records');
+
+    // If synced records exist in the encrypted vault, load and display them!
+    final syncedData = await EncryptedDatabaseHelper.loadSyncedData();
 
     _navigator.pushReplacement(
       MotherShellScreen.route(
         onLanguageChanged: (AppLanguage next) => _locale.language = next,
-        // Demo data until there is a record to read — see
-        // ObstetricHistory.sample.
-        obstetric: const ObstetricHistory.sample(),
-        // Demo data too — see ClinicRecord.sample. Not const: it holds dates.
-        clinic: ClinicRecord.sample(),
-        // TODO: read `vitals` from the record and pass `onSubmitProfile` once
-        // there is somewhere to store the profile.
+        profile: syncedData?.profile ?? const BasicProfile.empty(),
+        vitals: syncedData?.vitals ?? const KeyVitals.empty(),
+        history: syncedData?.medicalHistory ?? const MedicalHistory.empty(),
+        obstetric:
+            syncedData?.obstetricHistory ?? const ObstetricHistory.empty(),
+        clinic: syncedData?.clinicRecord ?? const ClinicRecord.empty(),
+        plan: syncedData?.deliveryPlan ?? const DeliveryPlan.empty(),
       ),
     );
   }

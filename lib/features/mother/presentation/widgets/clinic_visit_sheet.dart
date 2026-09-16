@@ -7,10 +7,285 @@ import '../../../../core/widgets/buttons/app_outline_button.dart';
 import '../../../../core/widgets/buttons/app_primary_button.dart';
 import '../../../../core/widgets/inputs/app_date_field.dart';
 import '../../../../core/widgets/inputs/app_dropdown_field.dart';
+import '../../../../core/widgets/inputs/app_switch_tile.dart';
 import '../../../../core/widgets/inputs/app_text_field.dart';
+import '../../../../core/widgets/cards/app_card.dart';
+import '../../../../core/widgets/detail_grid.dart';
+import '../../../../core/widgets/status_chip.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../domain/clinic_record.dart';
 import 'clinic_labels.dart';
+
+/// Displays the read-only details of one routine clinic visit from the clinic book.
+Future<void> showClinicVisitDetailSheet(
+  BuildContext context, {
+  required ClinicVisit visit,
+}) {
+  return showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    builder: (BuildContext context) => _ClinicVisitDetailSheet(visit: visit),
+  );
+}
+
+class _ClinicVisitDetailSheet extends StatelessWidget {
+  const _ClinicVisitDetailSheet({required this.visit});
+
+  final ClinicVisit visit;
+
+  @override
+  Widget build(BuildContext context) {
+    final AppLocalizations l10n = AppLocalizations.of(context);
+    final MaterialLocalizations material = MaterialLocalizations.of(context);
+
+    return SafeArea(
+      child: SingleChildScrollView(
+        padding: const EdgeInsets.fromLTRB(
+          AppSpacing.screenPadding,
+          AppSpacing.stackSm,
+          AppSpacing.screenPadding,
+          AppSpacing.sectionGap,
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: <Widget>[
+                      Text(
+                        l10n.visitWeek(visit.week),
+                        style: AppTextStyles.h2,
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        '${material.formatShortMonthDay(visit.date)}, ${material.formatYear(visit.date)}',
+                        style: AppTextStyles.bodySm.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                StatusChip(
+                  label: visitStatusLabel(l10n, visit.status),
+                  accent: visitStatusAccent(visit.status),
+                ),
+              ],
+            ),
+            const SizedBox(height: AppSpacing.sectionGap),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Text(l10n.sectionRoutineLogs, style: AppTextStyles.h3),
+                  const SizedBox(height: AppSpacing.stackMd),
+                  DetailGrid(
+                    items: <DetailPair>[
+                      DetailPair(label: l10n.fieldBp, value: visit.bloodPressure),
+                      DetailPair(
+                        label: l10n.fieldWeight,
+                        value: visit.weightKg == null
+                            ? null
+                            : '${visit.weightKg} ${l10n.unitKilograms}',
+                      ),
+                      DetailPair(
+                        label: l10n.fieldFundalHeight,
+                        value: visit.fundalHeightCm == null
+                            ? null
+                            : '${visit.fundalHeightCm} ${l10n.unitCentimetres}',
+                      ),
+                      DetailPair(
+                        label: l10n.fieldFhs,
+                        value: visit.fetalHeartRate == null
+                            ? null
+                            : '${visit.fetalHeartRate} ${l10n.unitBpm}',
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.componentGap),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Text(l10n.tabObstetric, style: AppTextStyles.h3),
+                  const SizedBox(height: AppSpacing.stackMd),
+                  DetailGrid(
+                    items: <DetailPair>[
+                      DetailPair(
+                        label: l10n.fieldFoetalLie,
+                        value: visit.foetalLie == null
+                            ? null
+                            : foetalLieLabel(l10n, visit.foetalLie!),
+                      ),
+                      DetailPair(
+                        label: l10n.fieldFoetalPresentation,
+                        value: visit.foetalPresentation == null
+                            ? null
+                            : foetalPresentationLabel(l10n, visit.foetalPresentation!),
+                      ),
+                      DetailPair(
+                        label: l10n.fieldEngagement,
+                        value: _boolLabel(
+                          visit.engagement,
+                          trueLabel: l10n.statusNormal,
+                          falseLabel: l10n.urineNil,
+                        ),
+                      ),
+                      DetailPair(
+                        label: l10n.fieldFoetalMovements,
+                        value: _boolLabel(
+                          visit.foetalMovements,
+                          trueLabel: l10n.statusNormal,
+                          falseLabel: l10n.urineNil,
+                        ),
+                      ),
+                      DetailPair(
+                        label: l10n.fieldPallor,
+                        value: _boolLabel(
+                          visit.pallor,
+                          trueLabel: l10n.statusReview,
+                          falseLabel: l10n.urineNil,
+                        ),
+                      ),
+                      DetailPair(
+                        label: l10n.fieldOedemaAnkle,
+                        value: _boolLabel(
+                          visit.ankleOedema,
+                          trueLabel: l10n.statusReview,
+                          falseLabel: l10n.urineNil,
+                        ),
+                      ),
+                      DetailPair(
+                        label: l10n.fieldOedemaFacial,
+                        value: _boolLabel(
+                          visit.facialOedema,
+                          trueLabel: l10n.statusReview,
+                          falseLabel: l10n.urineNil,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.componentGap),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Text(l10n.fieldUrine, style: AppTextStyles.h3),
+                  const SizedBox(height: AppSpacing.stackMd),
+                  DetailGrid(
+                    items: <DetailPair>[
+                      DetailPair(
+                        label: l10n.fieldUrineSugar,
+                        value: visit.urineSugar == null
+                            ? null
+                            : urineLabel(l10n, visit.urineSugar!),
+                      ),
+                      DetailPair(
+                        label: l10n.fieldUrineAlbumin,
+                        value: visit.urineAlbumin == null
+                            ? null
+                            : urineLabel(l10n, visit.urineAlbumin!),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: AppSpacing.componentGap),
+            AppCard(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  Text(l10n.sectionSupplementsDispensed, style: AppTextStyles.h3),
+                  const SizedBox(height: AppSpacing.stackMd),
+                  DetailGrid(
+                    items: <DetailPair>[
+                      DetailPair(
+                        label: l10n.suppIronFolate,
+                        value: _boolLabel(
+                          visit.ironFolate,
+                          trueLabel: l10n.statusNormal,
+                          falseLabel: l10n.urineNil,
+                        ),
+                      ),
+                      DetailPair(
+                        label: l10n.suppVitaminC,
+                        value: _boolLabel(
+                          visit.vitaminC,
+                          trueLabel: l10n.statusNormal,
+                          falseLabel: l10n.urineNil,
+                        ),
+                      ),
+                      DetailPair(
+                        label: l10n.suppCalcium,
+                        value: _boolLabel(
+                          visit.calcium,
+                          trueLabel: l10n.statusNormal,
+                          falseLabel: l10n.urineNil,
+                        ),
+                      ),
+                      DetailPair(
+                        label: l10n.suppFoodSupplement,
+                        value: _boolLabel(
+                          visit.foodSupplement,
+                          trueLabel: l10n.statusNormal,
+                          falseLabel: l10n.urineNil,
+                        ),
+                      ),
+                      if (visit.antimalarials == true)
+                        DetailPair(
+                          label: l10n.suppAntimalarial,
+                          value: l10n.statusNormal,
+                        ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (visit.examinerSignature != null &&
+                visit.examinerSignature!.isNotEmpty) ...<Widget>[
+              const SizedBox(height: AppSpacing.componentGap),
+              AppCard(
+                child: DetailGrid(
+                  columns: 1,
+                  items: <DetailPair>[
+                    DetailPair(
+                       label: l10n.fieldExaminerSignature,
+                       value: visit.examinerSignature,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+            const SizedBox(height: AppSpacing.sectionGap),
+            AppPrimaryButton(
+              label: l10n.actionClose,
+              onPressed: () => Navigator.pop(context),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String? _boolLabel(
+    bool? val, {
+    required String trueLabel,
+    required String falseLabel,
+  }) {
+    if (val == null) return null;
+    return val ? trueLabel : falseLabel;
+  }
+}
 
 /// Collects one routine visit, in the order it is written on the clinic card.
 ///
@@ -42,6 +317,7 @@ class _ClinicVisitSheetState extends State<_ClinicVisitSheet> {
   final TextEditingController _weight = TextEditingController();
   final TextEditingController _fundalHeight = TextEditingController();
   final TextEditingController _fetalHeartRate = TextEditingController();
+  final TextEditingController _examinerSignature = TextEditingController();
 
   /// Prefilled with today: a visit is nearly always logged on the day it
   /// happened, and the picker is still one tap away when it was not.
@@ -50,6 +326,20 @@ class _ClinicVisitSheetState extends State<_ClinicVisitSheet> {
   VisitStatus _status = VisitStatus.normal;
   UrineReading? _urineSugar;
   UrineReading? _urineAlbumin;
+
+  bool _pallor = false;
+  bool _ankleOedema = false;
+  bool _facialOedema = false;
+  FoetalLie? _foetalLie;
+  FoetalPresentation? _foetalPresentation;
+  bool _engagement = false;
+  bool _foetalMovements = true;
+
+  bool _ironFolate = false;
+  bool _vitaminC = false;
+  bool _calcium = false;
+  bool _antimalarials = false;
+  bool _foodSupplement = false;
 
   /// Only the week and the date are required — a card that skipped a row should
   /// be enterable as it stands, not padded with guesses to get past the form.
@@ -77,6 +367,7 @@ class _ClinicVisitSheetState extends State<_ClinicVisitSheet> {
     _weight.dispose();
     _fundalHeight.dispose();
     _fetalHeartRate.dispose();
+    _examinerSignature.dispose();
     super.dispose();
   }
 
@@ -253,6 +544,114 @@ class _ClinicVisitSheetState extends State<_ClinicVisitSheet> {
                 onChanged: (VisitStatus? next) =>
                     setState(() => _status = next ?? VisitStatus.normal),
               ),
+              const SizedBox(height: AppSpacing.componentGap),
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  Expanded(
+                    child: AppDropdownField<FoetalLie>(
+                      label: l10n.fieldFoetalLie,
+                      hint: l10n.hintChooseOne,
+                      value: _foetalLie,
+                      items: <AppDropdownItem<FoetalLie>>[
+                        for (final FoetalLie lie in FoetalLie.values)
+                          AppDropdownItem<FoetalLie>(
+                            value: lie,
+                            label: foetalLieLabel(l10n, lie),
+                          ),
+                      ],
+                      onChanged: (FoetalLie? next) =>
+                          setState(() => _foetalLie = next),
+                    ),
+                  ),
+                  const SizedBox(width: AppSpacing.componentGap),
+                  Expanded(
+                    child: AppDropdownField<FoetalPresentation>(
+                      label: l10n.fieldFoetalPresentation,
+                      hint: l10n.hintChooseOne,
+                      value: _foetalPresentation,
+                      items: <AppDropdownItem<FoetalPresentation>>[
+                        for (final FoetalPresentation pres
+                            in FoetalPresentation.values)
+                          AppDropdownItem<FoetalPresentation>(
+                            value: pres,
+                            label: foetalPresentationLabel(l10n, pres),
+                          ),
+                      ],
+                      onChanged: (FoetalPresentation? next) =>
+                          setState(() => _foetalPresentation = next),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: AppSpacing.componentGap),
+              AppSwitchTile(
+                label: l10n.fieldPallor,
+                value: _pallor,
+                onChanged: (bool value) => setState(() => _pallor = value),
+              ),
+              AppSwitchTile(
+                label: l10n.fieldOedemaAnkle,
+                value: _ankleOedema,
+                onChanged: (bool value) => setState(() => _ankleOedema = value),
+              ),
+              AppSwitchTile(
+                label: l10n.fieldOedemaFacial,
+                value: _facialOedema,
+                onChanged: (bool value) => setState(() => _facialOedema = value),
+              ),
+              AppSwitchTile(
+                label: l10n.fieldFoetalMovements,
+                value: _foetalMovements,
+                onChanged: (bool value) =>
+                    setState(() => _foetalMovements = value),
+              ),
+              AppSwitchTile(
+                label: l10n.fieldEngagement,
+                value: _engagement,
+                onChanged: (bool value) =>
+                    setState(() => _engagement = value),
+              ),
+              const SizedBox(height: AppSpacing.stackMd),
+              Text(
+                l10n.sectionSupplementsDispensed,
+                style: AppTextStyles.h3,
+              ),
+              const SizedBox(height: AppSpacing.stackSm),
+              AppSwitchTile(
+                label: l10n.suppIronFolate,
+                value: _ironFolate,
+                onChanged: (bool value) =>
+                    setState(() => _ironFolate = value),
+              ),
+              AppSwitchTile(
+                label: l10n.suppVitaminC,
+                value: _vitaminC,
+                onChanged: (bool value) => setState(() => _vitaminC = value),
+              ),
+              AppSwitchTile(
+                label: l10n.suppCalcium,
+                value: _calcium,
+                onChanged: (bool value) => setState(() => _calcium = value),
+              ),
+              AppSwitchTile(
+                label: l10n.suppAntimalarial,
+                value: _antimalarials,
+                onChanged: (bool value) =>
+                    setState(() => _antimalarials = value),
+              ),
+              AppSwitchTile(
+                label: l10n.suppFoodSupplement,
+                value: _foodSupplement,
+                onChanged: (bool value) =>
+                    setState(() => _foodSupplement = value),
+              ),
+              const SizedBox(height: AppSpacing.componentGap),
+              AppTextField(
+                label: l10n.fieldExaminerSignature,
+                hint: l10n.fieldExaminerSignatureHint,
+                controller: _examinerSignature,
+              ),
               const SizedBox(height: AppSpacing.stackLg),
               Row(
                 children: <Widget>[
@@ -354,6 +753,21 @@ class _ClinicVisitSheetState extends State<_ClinicVisitSheet> {
         fetalHeartRate: int.tryParse(_fetalHeartRate.text.trim()),
         urineSugar: _urineSugar,
         urineAlbumin: _urineAlbumin,
+        pallor: _pallor,
+        ankleOedema: _ankleOedema,
+        facialOedema: _facialOedema,
+        foetalLie: _foetalLie,
+        foetalPresentation: _foetalPresentation,
+        engagement: _engagement,
+        foetalMovements: _foetalMovements,
+        ironFolate: _ironFolate,
+        vitaminC: _vitaminC,
+        calcium: _calcium,
+        antimalarials: _antimalarials,
+        foodSupplement: _foodSupplement,
+        examinerSignature: _examinerSignature.text.trim().isEmpty
+            ? null
+            : _examinerSignature.text.trim(),
       ),
     );
   }

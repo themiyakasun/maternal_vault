@@ -165,8 +165,8 @@ void main() {
       await tester.tap(find.byType(DropdownButtonFormField<_Fruit>));
       await tester.pumpAndSettle();
 
-      // Still just the hidden copy behind the closed button — no menu opened.
-      expect(find.text('Apple'), findsOneWidget);
+      // Still closed with no item selected — no menu opened.
+      expect(find.text('Apple'), findsNothing);
     });
   });
 

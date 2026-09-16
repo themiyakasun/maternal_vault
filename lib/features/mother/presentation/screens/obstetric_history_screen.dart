@@ -3,30 +3,21 @@ import 'package:flutter/material.dart';
 import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/buttons/app_text_button.dart';
 import '../../../../core/widgets/cards/app_card.dart';
 import '../../../../core/widgets/cards/tile_card.dart';
 import '../../../../core/widgets/detail_grid.dart';
-import '../../../../core/widgets/inputs/app_date_field.dart';
-import '../../../../core/widgets/inputs/app_switch_tile.dart';
-import '../../../../core/widgets/inputs/app_text_field.dart';
 import '../../../../core/widgets/section_heading.dart';
 import '../../../../core/widgets/status_chip.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../domain/obstetric_history.dart';
 import '../widgets/obstetric_labels.dart';
-import '../widgets/past_pregnancy_sheet.dart';
 
 /// The mother's third tab: how many pregnancies there have been, what was
 /// screened at booking, the dates this one turns on, and every pregnancy before
 /// it.
 ///
-/// Like the history tab and unlike the profile form, there is no Save. Each row
-/// commits as it moves and [onChanged] fires with the whole updated record, so
-/// nothing here can be half-entered and lost.
-///
-/// Past pregnancies are rendered, never invented: an empty list says so rather
-/// than showing a sample row.
+/// All data here reflects the mother's official clinic book (MOH Form H 512 A)
+/// recorded by clinical officers at booking, presented in read-only form.
 class ObstetricHistoryScreen extends StatefulWidget {
   const ObstetricHistoryScreen({
     super.key,
@@ -37,9 +28,7 @@ class ObstetricHistoryScreen extends StatefulWidget {
   /// What the screen starts on. Defaults to a record with nothing entered.
   final ObstetricHistory history;
 
-  /// Fired with the full record after every change, including a pregnancy added
-  /// through the sheet. Null leaves the rows working but going nowhere, which is
-  /// the state until the record layer lands.
+  /// Fired with the full record after every change.
   final ValueChanged<ObstetricHistory>? onChanged;
 
   @override
@@ -49,33 +38,14 @@ class ObstetricHistoryScreen extends StatefulWidget {
 class _ObstetricHistoryScreenState extends State<ObstetricHistoryScreen> {
   late ObstetricHistory _history = widget.history;
 
-  final TextEditingController _gravidity = TextEditingController();
-  final TextEditingController _livingChildren = TextEditingController();
-
-  @override
-  void initState() {
-    super.initState();
-    _gravidity.text = _text(_history.gravidity);
-    _livingChildren.text = _text(_history.livingChildren);
-  }
-
   @override
   void didUpdateWidget(ObstetricHistoryScreen oldWidget) {
     super.didUpdateWidget(oldWidget);
-    // A new record from above wins — otherwise a reload would leave the rows
-    // showing the copy this screen was first built with.
     if (widget.history != oldWidget.history) {
-      _history = widget.history;
-      _reseed(_gravidity, _history.gravidity);
-      _reseed(_livingChildren, _history.livingChildren);
+      setState(() {
+        _history = widget.history;
+      });
     }
-  }
-
-  @override
-  void dispose() {
-    _gravidity.dispose();
-    _livingChildren.dispose();
-    super.dispose();
   }
 
   @override
@@ -96,6 +66,10 @@ class _ObstetricHistoryScreenState extends State<ObstetricHistoryScreen> {
           const SizedBox(height: AppSpacing.stackMd),
           _counts(l10n),
           const SizedBox(height: AppSpacing.sectionGap),
+          SectionHeading(title: l10n.fieldRiskConditions),
+          const SizedBox(height: AppSpacing.stackMd),
+          _riskConditionsSection(l10n),
+          const SizedBox(height: AppSpacing.sectionGap),
           SectionHeading(title: l10n.sectionScreening),
           const SizedBox(height: AppSpacing.stackMd),
           _screening(l10n),
@@ -104,14 +78,7 @@ class _ObstetricHistoryScreenState extends State<ObstetricHistoryScreen> {
           const SizedBox(height: AppSpacing.stackMd),
           _keyDates(l10n),
           const SizedBox(height: AppSpacing.sectionGap),
-          SectionHeading(
-            title: l10n.sectionPastObstetric,
-            trailing: AppTextButton(
-              label: l10n.actionAdd,
-              icon: Icons.add_rounded,
-              onPressed: _addPregnancy,
-            ),
-          ),
+          SectionHeading(title: l10n.sectionPastObstetric),
           const SizedBox(height: AppSpacing.stackMd),
           _pastPregnancies(l10n),
         ],
@@ -119,38 +86,48 @@ class _ObstetricHistoryScreenState extends State<ObstetricHistoryScreen> {
     );
   }
 
-  /// Gravidity beside living children: the two are read as a pair, and putting
-  /// them on one line keeps that obvious.
+  /// Gravidity, Parity, Living Children, and Youngest Child's Age.
   Widget _counts(AppLocalizations l10n) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        Expanded(
-          child: AppTextField(
+    return AppCard(
+      child: DetailGrid(
+        items: <DetailPair>[
+          DetailPair(
             label: l10n.fieldGravidity,
-            controller: _gravidity,
-            keyboardType: TextInputType.number,
-            // Two digits covers every real answer, and refusing the rest at the
-            // keyboard beats explaining it in an error.
-            maxLength: 2,
-            onChanged: (String value) => _update(
-              _history.copyWith(gravidity: int.tryParse(value.trim())),
-            ),
+            value: _history.gravidity?.toString(),
           ),
-        ),
-        const SizedBox(width: AppSpacing.componentGap),
-        Expanded(
-          child: AppTextField(
+          DetailPair(
+            label: l10n.fieldParity,
+            value: _history.parity?.toString(),
+          ),
+          DetailPair(
             label: l10n.fieldLivingChildren,
-            controller: _livingChildren,
-            keyboardType: TextInputType.number,
-            maxLength: 2,
-            onChanged: (String value) => _update(
-              _history.copyWith(livingChildren: int.tryParse(value.trim())),
-            ),
+            value: _history.livingChildren?.toString(),
           ),
-        ),
-      ],
+          DetailPair(
+            label: l10n.fieldYoungestChildAge,
+            value: _history.youngestChildAgeYears == null
+                ? null
+                : l10n.ageInYears(_history.youngestChildAgeYears!),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _riskConditionsSection(AppLocalizations l10n) {
+    return AppCard(
+      leadingAccent: _history.riskConditionsAndMorbidities != null
+          ? AppColors.error
+          : null,
+      child: DetailGrid(
+        columns: 1,
+        items: <DetailPair>[
+          DetailPair(
+            label: l10n.fieldRiskConditions,
+            value: _history.riskConditionsAndMorbidities,
+          ),
+        ],
+      ),
     );
   }
 
@@ -158,66 +135,80 @@ class _ObstetricHistoryScreenState extends State<ObstetricHistoryScreen> {
     return TileCard(
       children: <Widget>[
         for (final ObstetricScreening question in ObstetricScreening.values)
-          AppSwitchTile(
-            label: screeningLabel(l10n, question),
-            value: _history.hasScreening(question),
-            onChanged: (bool present) =>
-                _update(_history.withScreening(question, present: present)),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              vertical: AppSpacing.unit,
+              horizontal: AppSpacing.unit,
+            ),
+            child: Row(
+              children: <Widget>[
+                Icon(
+                  _history.hasScreening(question)
+                      ? Icons.check_circle_rounded
+                      : Icons.remove_circle_outline_rounded,
+                  color: _history.hasScreening(question)
+                      ? AppColors.health
+                      : AppColors.outline,
+                  size: 22,
+                ),
+                const SizedBox(width: AppSpacing.stackMd),
+                Expanded(
+                  child: Text(
+                    screeningLabel(l10n, question),
+                    style: AppTextStyles.bodyLg,
+                  ),
+                ),
+              ],
+            ),
           ),
       ],
     );
   }
 
-  /// The four dates, uncarded.
-  ///
-  /// No card around them: a card groups things that are read together, and these
-  /// are looked up one at a time. Each field's own outline is enough.
-  Widget _keyDates(AppLocalizations l10n) {
-    // Dates already passed for the two that can only be in the past; the two
-    // expected dates are the only ones allowed ahead of today.
-    final DateTime today = DateTime.now();
+  String? _formatDate(MaterialLocalizations material, DateTime? date) {
+    if (date == null) return null;
+    return '${material.formatShortMonthDay(date)}, ${material.formatYear(date)}';
+  }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: <Widget>[
-        AppDateField(
-          label: l10n.fieldLrmp,
-          hint: l10n.hintPickDate,
-          icon: Icons.calendar_month_outlined,
-          value: _history.lastMenstrualPeriod,
-          lastDate: today,
-          onChanged: (DateTime? next) =>
-              _update(_history.copyWith(lastMenstrualPeriod: next)),
-        ),
-        const SizedBox(height: AppSpacing.componentGap),
-        AppDateField(
-          label: l10n.fieldEdd,
-          hint: l10n.hintPickDate,
-          icon: Icons.event_available_outlined,
-          value: _history.expectedDelivery,
-          onChanged: (DateTime? next) =>
-              _update(_history.copyWith(expectedDelivery: next)),
-        ),
-        const SizedBox(height: AppSpacing.componentGap),
-        AppDateField(
-          label: l10n.fieldUltrasoundEdd,
-          hint: l10n.hintPickDate,
-          icon: Icons.monitor_heart_outlined,
-          value: _history.ultrasoundExpectedDelivery,
-          onChanged: (DateTime? next) =>
-              _update(_history.copyWith(ultrasoundExpectedDelivery: next)),
-        ),
-        const SizedBox(height: AppSpacing.componentGap),
-        AppDateField(
-          label: l10n.fieldQuickening,
-          hint: l10n.hintPickDate,
-          icon: Icons.child_care_outlined,
-          value: _history.quickening,
-          lastDate: today,
-          onChanged: (DateTime? next) =>
-              _update(_history.copyWith(quickening: next)),
-        ),
-      ],
+  /// The clinic dates, registration details, and contraceptive history.
+  Widget _keyDates(AppLocalizations l10n) {
+    final MaterialLocalizations material = MaterialLocalizations.of(context);
+
+    return AppCard(
+      child: DetailGrid(
+        items: <DetailPair>[
+          DetailPair(
+            label: l10n.fieldLrmp,
+            value: _formatDate(material, _history.lastMenstrualPeriod),
+          ),
+          DetailPair(
+            label: l10n.fieldEdd,
+            value: _formatDate(material, _history.expectedDelivery),
+          ),
+          DetailPair(
+            label: l10n.fieldUltrasoundEdd,
+            value: _formatDate(material, _history.ultrasoundExpectedDelivery),
+          ),
+          DetailPair(
+            label: l10n.fieldExpectedPeriod,
+            value: _history.expectedDeliveryPeriod,
+          ),
+          DetailPair(
+            label: l10n.fieldQuickening,
+            value: _formatDate(material, _history.quickening),
+          ),
+          DetailPair(
+            label: l10n.fieldPoaAtRegistration,
+            value: _history.poaAtRegistrationWeeks == null
+                ? null
+                : l10n.weeksShort(_history.poaAtRegistrationWeeks!),
+          ),
+          DetailPair(
+            label: l10n.fieldContraceptiveLastUsed,
+            value: _history.contraceptiveMethodLastUsed,
+          ),
+        ],
+      ),
     );
   }
 
@@ -244,39 +235,6 @@ class _ObstetricHistoryScreenState extends State<ObstetricHistoryScreen> {
       ],
     );
   }
-
-  /// Opens the sheet and appends whatever it returns.
-  ///
-  /// The new entry takes the next G number, so the list keeps reading in the
-  /// order the pregnancies happened.
-  Future<void> _addPregnancy() async {
-    final PastPregnancy? added = await showPastPregnancySheet(
-      context,
-      order: _history.pregnancies.length + 1,
-    );
-
-    // Null means the sheet was dismissed without saving.
-    if (added == null) return;
-    _update(
-      _history.copyWith(
-        pregnancies: <PastPregnancy>[..._history.pregnancies, added],
-      ),
-    );
-  }
-
-  void _update(ObstetricHistory next) {
-    setState(() => _history = next);
-    widget.onChanged?.call(next);
-  }
-
-  /// Writes [value] into [controller] only when it actually differs, so a record
-  /// arriving from above while the field has focus does not move the caret.
-  void _reseed(TextEditingController controller, int? value) {
-    final String next = _text(value);
-    if (controller.text != next) controller.text = next;
-  }
-
-  String _text(int? value) => value?.toString() ?? '';
 }
 
 /// One earlier pregnancy: which it was, how it ended, and the four facts the
@@ -353,6 +311,24 @@ class _PastPregnancyCard extends StatelessWidget {
                 label: l10n.fieldSexAge,
                 value: _sexAndAge(l10n),
               ),
+              if (pregnancy.placeOfDelivery != null &&
+                  pregnancy.placeOfDelivery!.isNotEmpty)
+                DetailPair(
+                  label: l10n.fieldPlaceOfDelivery,
+                  value: pregnancy.placeOfDelivery,
+                ),
+              if (pregnancy.antenatalComplications != null &&
+                  pregnancy.antenatalComplications!.isNotEmpty)
+                DetailPair(
+                  label: l10n.fieldAntenatalComplications,
+                  value: pregnancy.antenatalComplications,
+                ),
+              if (pregnancy.postnatalComplications != null &&
+                  pregnancy.postnatalComplications!.isNotEmpty)
+                DetailPair(
+                  label: l10n.fieldPostnatalComplications,
+                  value: pregnancy.postnatalComplications,
+                ),
             ],
           ),
         ],

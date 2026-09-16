@@ -15,23 +15,27 @@ import 'clinic_labels.dart';
 /// compare this visit against the last, which only works if the next card is
 /// visibly there to be scrolled to.
 class ClinicVisitCard extends StatelessWidget {
-  const ClinicVisitCard({super.key, required this.visit, this.width = 268});
+  const ClinicVisitCard({
+    super.key,
+    required this.visit,
+    this.width = 268,
+    this.onTap,
+  });
 
   final ClinicVisit visit;
 
   final double width;
+
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
     final MaterialLocalizations material = MaterialLocalizations.of(context);
 
-    return SizedBox(
-      width: width,
-      child: AppCard(
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: <Widget>[
+    final Widget content = Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: <Widget>[
             Row(
               children: <Widget>[
                 Expanded(
@@ -76,6 +80,16 @@ class ClinicVisitCard extends StatelessWidget {
                       ? null
                       : '${visit.fetalHeartRate} ${l10n.unitBpm}',
                 ),
+                if (visit.foetalLie != null)
+                  DetailPair(
+                    label: l10n.fieldFoetalLie,
+                    value: foetalLieLabel(l10n, visit.foetalLie!),
+                  ),
+                if (visit.foetalPresentation != null)
+                  DetailPair(
+                    label: l10n.fieldFoetalPresentation,
+                    value: foetalPresentationLabel(l10n, visit.foetalPresentation!),
+                  ),
               ],
             ),
             const Divider(),
@@ -83,9 +97,28 @@ class ClinicVisitCard extends StatelessWidget {
               columns: 1,
               items: <DetailPair>[
                 DetailPair(label: l10n.fieldUrine, value: _urine(l10n)),
+                if (visit.examinerSignature != null &&
+                    visit.examinerSignature!.isNotEmpty)
+                  DetailPair(
+                    label: l10n.fieldExaminerSignature,
+                    value: visit.examinerSignature,
+                  ),
               ],
             ),
           ],
+        );
+
+    return SizedBox(
+      width: width,
+      child: AppCard(
+        padding: EdgeInsets.zero,
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: AppRadii.cardRadius,
+          child: Padding(
+            padding: const EdgeInsets.all(AppSpacing.cardPadding),
+            child: content,
+          ),
         ),
       ),
     );
