@@ -8,6 +8,47 @@ import 'dart:io';
 /// resulting in low-density QR codes that scan in under 100 milliseconds.
 class QrPayloadCompressor {
   static const String prefix = 'MVZ:'; // Maternal Vault Zlib prefix
+  static const String gzipPrefix = 'MVZ1:GZ:'; // Maternal Vault Gzip Ultra-Fast prefix
+
+  /// Checks whether a scanned payload is a standard web URL (Phone Camera Pass).
+  static bool isWebUrl(String payload) {
+    final trimmed = payload.trim();
+    return trimmed.startsWith('http://') || trimmed.startsWith('https://');
+  }
+
+  /// Zero-dependency Gzip decompression matching the MaternalVault specification.
+  /// Decompresses base64Url payload prefixed with 'MVZ1:GZ:' using standard dart:io and dart:convert.
+  static Map<String, dynamic> decodeMaternalVaultGzipQR(String scannedCode) {
+    // Strip payload header if present
+    final cleanPayload = scannedCode.startsWith(gzipPrefix)
+        ? scannedCode.substring(gzipPrefix.length)
+        : (scannedCode.startsWith('MVZ1:GZ:')
+            ? scannedCode.substring(8)
+            : scannedCode);
+
+    // 1. Base64URL Decode
+    final compressedBytes = base64Url.decode(base64Url.normalize(cleanPayload));
+    // 2. Gzip decode
+    final decompressedBytes = gzip.decode(compressedBytes);
+    // 3. UTF-8 decode
+    final jsonString = utf8.decode(decompressedBytes);
+    final map = jsonDecode(jsonString) as Map<String, dynamic>;
+    if (map.containsKey('_mv')) {
+      return map;
+    }
+    return expand(map);
+  }
+
+  /// Compresses a clinical JSON map into an ultra-compact Gzip QR payload string
+  /// with 'MVZ1:GZ:' prefix, resulting in a sparse, low-density QR code.
+  static String compressGzip(Map<String, dynamic> rawJson, {bool minifyKeys = true}) {
+    final payloadMap = minifyKeys ? minify(rawJson) : rawJson;
+    final jsonStr = jsonEncode(payloadMap);
+    final rawBytes = utf8.encode(jsonStr);
+    final compressedBytes = gzip.encode(rawBytes);
+    final base64String = base64UrlEncode(compressedBytes);
+    return '$gzipPrefix$base64String';
+  }
 
   /// Minifies a JSON map by replacing verbose keys with short tokens.
   static Map<String, dynamic> minify(Map<String, dynamic> source) {
@@ -75,8 +116,9 @@ class QrPayloadCompressor {
 
   /// Decompresses any QR payload back into a standard `Map<String, dynamic>`.
   /// Transparently handles:
-  /// - Compressed payloads (`MVZ:<base64>`)
-  /// - Raw Zlib compressed Base64
+  /// - Gzip Ultra-Fast payloads (`MVZ1:GZ:<base64url>`)
+  /// - Compressed Zlib payloads (`MVZ:<base64>`)
+  /// - Raw Zlib / Gzip compressed Base64
   /// - Plain JSON / Base64 JSON (backward compatibility)
   static Map<String, dynamic> decompress(String rawPayload) {
     final trimmed = rawPayload.trim();
@@ -84,36 +126,54 @@ class QrPayloadCompressor {
       throw const FormatException('QR payload is empty');
     }
 
-    // 1. If it has the compressed prefix 'MVZ:'
+    // 1. If it has the Gzip ultra-fast prefix 'MVZ1:GZ:'
+    if (trimmed.startsWith(gzipPrefix) || trimmed.startsWith('MVZ1:GZ:')) {
+      return decodeMaternalVaultGzipQR(trimmed);
+    }
+
+    // 2. If it has the compressed prefix 'MVZ:'
     if (trimmed.startsWith(prefix)) {
       final encoded = trimmed.substring(prefix.length);
-      final compressedBytes = base64Url.decode(encoded);
+      final compressedBytes = base64Url.decode(base64Url.normalize(encoded));
       final decompressedBytes = zlib.decode(compressedBytes);
       final jsonStr = utf8.decode(decompressedBytes);
       final minifiedMap = jsonDecode(jsonStr) as Map<String, dynamic>;
       return expand(minifiedMap);
     }
 
-    // 2. If it's a plain JSON string (already in standard format)
+    // 3. If it's a plain JSON string (already in standard format)
     if (trimmed.startsWith('{') && trimmed.endsWith('}')) {
       return jsonDecode(trimmed) as Map<String, dynamic>;
     }
 
-    // 3. Try Base64Url / Base64 decoding (could be legacy base64-json OR raw zlib)
+    // 4. Try Base64Url / Base64 decoding (could be legacy base64-json OR raw gzip/zlib)
     try {
-      final normalized = base64.normalize(trimmed);
-      final decodedBytes = base64.decode(normalized);
-
+      List<int> decodedBytes;
       try {
-        // Try zlib decompression first
-        final decompressedBytes = zlib.decode(decodedBytes);
+        decodedBytes = base64Url.decode(base64Url.normalize(trimmed));
+      } catch (_) {
+        decodedBytes = base64.decode(base64.normalize(trimmed));
+      }
+
+      // Try gzip decompression first
+      try {
+        final decompressedBytes = gzip.decode(decodedBytes);
         final jsonStr = utf8.decode(decompressedBytes);
         final map = jsonDecode(jsonStr) as Map<String, dynamic>;
         return expand(map);
       } catch (_) {
-        // Fallback: standard utf-8 decode of base64
-        final jsonStr = utf8.decode(decodedBytes);
-        return jsonDecode(jsonStr) as Map<String, dynamic>;
+        // Try zlib decompression second
+        try {
+          final decompressedBytes = zlib.decode(decodedBytes);
+          final jsonStr = utf8.decode(decompressedBytes);
+          final map = jsonDecode(jsonStr) as Map<String, dynamic>;
+          return expand(map);
+        } catch (_) {
+          // Fallback: standard utf-8 decode of base64
+          final jsonStr = utf8.decode(decodedBytes);
+          final map = jsonDecode(jsonStr) as Map<String, dynamic>;
+          return expand(map);
+        }
       }
     } catch (_) {
       throw const FormatException('Invalid QR code format: not a valid JSON or compressed payload.');

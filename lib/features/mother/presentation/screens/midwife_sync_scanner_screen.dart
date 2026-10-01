@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
@@ -71,7 +72,9 @@ class _MidwifeSyncScannerScreenState extends State<MidwifeSyncScannerScreen> {
       final result = await widget.syncService.processQrPayload(rawPayload);
       if (!mounted) return;
 
-      if (result.isSuccess) {
+      if (result.isCameraLink) {
+        _showCameraLinkDialog(result.cameraLinkUrl ?? rawPayload);
+      } else if (result.isSuccess) {
         _lastSuccessfulResult = result;
         await _showSuccessDialog(result);
       } else {
@@ -263,93 +266,275 @@ class _MidwifeSyncScannerScreenState extends State<MidwifeSyncScannerScreen> {
     );
   }
 
-  void _showSampleQrDialog() {
-    final samplePayload =
-        MidwifeSyncService.generateSamplePayload(compressed: true);
+  void _showCameraLinkDialog(String url) {
     final l10n = AppLocalizations.of(context);
+
+    showDialog<void>(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext dialogContext) {
+        return AlertDialog(
+          shape: const RoundedRectangleBorder(
+            borderRadius: AppRadii.cardRadius,
+          ),
+          icon: Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: AppColors.tertiary.withValues(alpha: 0.12),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.phone_iphone_rounded,
+              color: AppColors.tertiary,
+              size: 36,
+            ),
+          ),
+          title: const Text(
+            'Phone Camera Pass Link',
+            style: AppTextStyles.h3,
+            textAlign: TextAlign.center,
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: <Widget>[
+              const Text(
+                'This QR code is a Phone Camera Pass web link for quick browsing in a mobile web browser.',
+                style: AppTextStyles.bodySm,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: AppSpacing.stackMd),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: AppColors.surface,
+                  borderRadius: BorderRadius.circular(AppRadii.md),
+                  border: Border.all(color: AppColors.outlineVariant),
+                ),
+                child: SelectableText(
+                  url,
+                  style: AppTextStyles.bodySm.copyWith(
+                    color: AppColors.primary,
+                    fontFamily: 'monospace',
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+              ),
+              const SizedBox(height: AppSpacing.stackSm),
+              Text(
+                'To import clinical records into Maternal Vault, scan a Gzip Ultra-Fast QR or JSON Vault QR code.',
+                style: AppTextStyles.labelCaps.copyWith(
+                  fontSize: 10,
+                  color: AppColors.onSurfaceVariant,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+          actions: <Widget>[
+            TextButton(
+              onPressed: () {
+                Clipboard.setData(ClipboardData(text: url));
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Link copied to clipboard!'),
+                    backgroundColor: AppColors.primary,
+                    duration: Duration(seconds: 2),
+                  ),
+                );
+              },
+              child: const Text('Copy Link'),
+            ),
+            TextButton(
+              onPressed: () {
+                Navigator.of(dialogContext).pop();
+                setState(() => _hasDetected = false);
+              },
+              child: Text(l10n.actionDone),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showSampleQrDialog() {
+    final l10n = AppLocalizations.of(context);
+    QrTransferMode selectedMode = QrTransferMode.gzipCompressed;
 
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (BuildContext sheetContext) {
-        return Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius:
-                BorderRadius.vertical(top: Radius.circular(AppRadii.xl)),
-          ),
-          padding: const EdgeInsets.all(AppSpacing.screenPadding),
-          child: SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: <Widget>[
-                Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(
-                    color: Colors.black26,
-                    borderRadius: BorderRadius.circular(2),
-                  ),
-                ),
-                const SizedBox(height: AppSpacing.stackMd),
-                Text(
-                  'Midwife Clinic QR Code',
-                  style: AppTextStyles.h3.copyWith(color: AppColors.onSurface),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  'Kumari Sandamali Perera (#6720) • 7 Visits • Low Risk',
-                  style: AppTextStyles.bodySm
-                      .copyWith(color: AppColors.onSurfaceVariant),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppSpacing.stackMd),
-                Container(
-                  padding: const EdgeInsets.all(16),
-                  decoration: BoxDecoration(
-                    color: Colors.white,
-                    borderRadius: BorderRadius.circular(AppRadii.lg),
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.08),
-                        blurRadius: 16,
-                        offset: const Offset(0, 4),
+        return StatefulBuilder(
+          builder: (BuildContext context, StateSetter setModalState) {
+            final String currentPayload =
+                MidwifeSyncService.generateSamplePayloadByMode(selectedMode);
+
+            String modeBadge;
+            String modeDescription;
+            switch (selectedMode) {
+              case QrTransferMode.gzipCompressed:
+                modeBadge = '⚡ ~599 bytes • ~70.9% smaller • Fast Scan';
+                modeDescription =
+                    'Gzip Ultra-Fast QR (MVZ1:GZ:...) decompressed in milliseconds with zero external dependencies.';
+                break;
+              case QrTransferMode.cameraLink:
+                modeBadge = '📱 Phone Camera Pass (Web Link)';
+                modeDescription =
+                    'Standard lightweight web URL link for quick browsing with any native smartphone camera.';
+                break;
+              case QrTransferMode.fullJson:
+                modeBadge = '💾 ~2,056 bytes • JSON Vault (Raw)';
+                modeDescription =
+                    'Complete uncompressed raw JSON payload preserved as the original backup transfer mechanism.';
+                break;
+            }
+
+            return Container(
+              decoration: const BoxDecoration(
+                color: Colors.white,
+                borderRadius:
+                    BorderRadius.vertical(top: Radius.circular(AppRadii.xl)),
+              ),
+              padding: const EdgeInsets.all(AppSpacing.screenPadding),
+              child: SafeArea(
+                child: SingleChildScrollView(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: <Widget>[
+                      Container(
+                        width: 40,
+                        height: 4,
+                        decoration: BoxDecoration(
+                          color: Colors.black26,
+                          borderRadius: BorderRadius.circular(2),
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.stackMd),
+                      Text(
+                        'Midwife Clinic QR Code',
+                        style: AppTextStyles.h3
+                            .copyWith(color: AppColors.onSurface),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Kumari Sandamali Perera (#6720) • 7 Visits • Low Risk',
+                        style: AppTextStyles.bodySm
+                            .copyWith(color: AppColors.onSurfaceVariant),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: AppSpacing.stackMd),
+
+                      // 3 Dedicated QR Code Transfer Modes Segmented Selector
+                      SegmentedButton<QrTransferMode>(
+                        segments: const <ButtonSegment<QrTransferMode>>[
+                          ButtonSegment<QrTransferMode>(
+                            value: QrTransferMode.gzipCompressed,
+                            label: Text('⚡ Gzip Fast', style: TextStyle(fontSize: 12)),
+                          ),
+                          ButtonSegment<QrTransferMode>(
+                            value: QrTransferMode.cameraLink,
+                            label: Text('📱 Camera Pass', style: TextStyle(fontSize: 12)),
+                          ),
+                          ButtonSegment<QrTransferMode>(
+                            value: QrTransferMode.fullJson,
+                            label: Text('💾 JSON Vault', style: TextStyle(fontSize: 12)),
+                          ),
+                        ],
+                        selected: <QrTransferMode>{selectedMode},
+                        onSelectionChanged:
+                            (Set<QrTransferMode> newSelection) {
+                          setModalState(() {
+                            selectedMode = newSelection.first;
+                          });
+                        },
+                        style: ButtonStyle(
+                          visualDensity: VisualDensity.compact,
+                          tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.stackSm),
+
+                      // Mode description & badge
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(AppRadii.sm),
+                        ),
+                        child: Text(
+                          modeBadge,
+                          style: AppTextStyles.labelCaps.copyWith(
+                            color: AppColors.primary,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        modeDescription,
+                        style: AppTextStyles.bodySm.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                          fontSize: 11,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: AppSpacing.stackMd),
+
+                      // QR Code preview
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(AppRadii.lg),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withValues(alpha: 0.08),
+                              blurRadius: 16,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: QrImageView(
+                          key: ValueKey<QrTransferMode>(selectedMode),
+                          data: currentPayload,
+                          version: QrVersions.auto,
+                          size: 200.0,
+                          backgroundColor: Colors.white,
+                        ),
+                      ),
+                      const SizedBox(height: AppSpacing.stackMd),
+
+                      Text(
+                        'Point another device camera at this QR code, or tap below to directly sync this record into the application.',
+                        style: AppTextStyles.bodySm
+                            .copyWith(color: AppColors.onSurfaceVariant),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: AppSpacing.stackLg),
+                      AppPrimaryButton(
+                        label: 'Sync This Record Directly',
+                        icon: Icons.sync_rounded,
+                        onPressed: () {
+                          Navigator.of(sheetContext).pop();
+                          _processPayload(currentPayload);
+                        },
+                      ),
+                      const SizedBox(height: AppSpacing.stackSm),
+                      TextButton(
+                        onPressed: () => Navigator.of(sheetContext).pop(),
+                        child: Text(l10n.actionDone),
                       ),
                     ],
                   ),
-                  child: QrImageView(
-                    data: samplePayload,
-                    version: QrVersions.auto,
-                    size: 200.0,
-                    backgroundColor: Colors.white,
-                  ),
                 ),
-                const SizedBox(height: AppSpacing.stackMd),
-                Text(
-                  'Point another device camera at this QR code, or tap below to directly sync this record into the application.',
-                  style: AppTextStyles.bodySm
-                      .copyWith(color: AppColors.onSurfaceVariant),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: AppSpacing.stackLg),
-                AppPrimaryButton(
-                  label: 'Sync This Record Directly',
-                  icon: Icons.sync_rounded,
-                  onPressed: () {
-                    Navigator.of(sheetContext).pop();
-                    _simulateSync();
-                  },
-                ),
-                const SizedBox(height: AppSpacing.stackSm),
-                TextButton(
-                  onPressed: () => Navigator.of(sheetContext).pop(),
-                  child: Text(l10n.actionDone),
-                ),
-              ],
-            ),
-          ),
+              ),
+            );
+          },
         );
       },
     );

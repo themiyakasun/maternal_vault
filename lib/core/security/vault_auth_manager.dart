@@ -34,7 +34,7 @@ class VaultAuthManager {
     final saltHex = saltBytes.map((b) => b.toRadixString(16).padLeft(2, '0')).join();
 
     // Hash PIN with salt
-    final saltedPin = '';
+    final saltedPin = '$saltHex:$pin';
     final hash = sha256.convert(utf8.encode(saltedPin)).toString();
 
     // Store in secure storage
@@ -51,10 +51,24 @@ class VaultAuthManager {
       return false;
     }
 
-    final saltedPin = '';
+    final saltedPin = '$saltHex:$pin';
     final computedHash = sha256.convert(utf8.encode(saltedPin)).toString();
 
     return computedHash == storedHash;
+  }
+
+  /// Changes the vault PIN after verifying the current PIN.
+  /// Returns true if successfully updated, false if current PIN was incorrect.
+  static Future<bool> changePin({
+    required String currentPin,
+    required String newPin,
+  }) async {
+    final isValid = await verifyPin(currentPin);
+    if (!isValid) {
+      return false;
+    }
+    await setupPin(newPin);
+    return true;
   }
 
   /// Checks if a PIN has already been configured for this vault.

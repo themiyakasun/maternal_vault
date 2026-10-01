@@ -57,6 +57,63 @@ void main() {
       expect(decompressedMap['edd'], rawMap['edd']);
     });
 
+    test('3 Dedicated QR Transfer Modes: Gzip Ultra-Fast (MVZ1:GZ:), Camera Link, and Full JSON', () async {
+      final sampleRawJson = MidwifeSyncService.generateSamplePayload(compressed: false);
+      final rawMap = jsonDecode(sampleRawJson) as Map<String, dynamic>;
+
+      // 1. Gzip Ultra-Fast mode (MVZ1:GZ:)
+      final gzipPayload = MidwifeSyncService.generateSamplePayloadByMode(QrTransferMode.gzipCompressed);
+      expect(gzipPayload.startsWith('MVZ1:GZ:'), isTrue);
+      // Verify dramatic size reduction (~70% reduction)
+      expect(gzipPayload.length, lessThan(sampleRawJson.length * 0.45));
+
+      // Decompress with zero-dependency method
+      final gzipDecoded = QrPayloadCompressor.decodeMaternalVaultGzipQR(gzipPayload);
+      expect(gzipDecoded['name'], rawMap['name']);
+      expect(gzipDecoded['age'], rawMap['age']);
+      expect(gzipDecoded['visits'], isA<List>());
+
+      // Also verify QrPayloadCompressor.decompress automatically recognizes MVZ1:GZ:
+      final autoDecoded = QrPayloadCompressor.decompress(gzipPayload);
+      expect(autoDecoded['name'], rawMap['name']);
+
+      // Verify MidwifeSyncService successfully syncs the Gzip payload
+      final service = MidwifeSyncService(
+        onSaveSyncData: ({
+          required BasicProfile profile,
+          required KeyVitals vitals,
+          MedicalHistory medicalHistory = const MedicalHistory.empty(),
+          required ObstetricHistory obstetricHistory,
+          required ClinicRecord clinicRecord,
+          required DeliveryPlan deliveryPlan,
+          String? clinicName,
+          String? midwifeName,
+          int version = 1,
+          String? payloadHash,
+        }) async {
+          expect(profile.motherName, rawMap['name']);
+        },
+      );
+      final gzipSyncResult = await service.processQrPayload(gzipPayload);
+      expect(gzipSyncResult.isSuccess, isTrue);
+      expect(gzipSyncResult.motherName, rawMap['name']);
+
+      // 2. Camera Pass mode (Web URL)
+      final cameraLinkPayload = MidwifeSyncService.generateSamplePayloadByMode(QrTransferMode.cameraLink);
+      expect(cameraLinkPayload.startsWith('http'), isTrue);
+      final cameraResult = await service.processQrPayload(cameraLinkPayload);
+      expect(cameraResult.isSuccess, isFalse);
+      expect(cameraResult.isCameraLink, isTrue);
+      expect(cameraResult.cameraLinkUrl, cameraLinkPayload);
+
+      // 3. Full JSON mode (Raw uncompressed)
+      final fullJsonPayload = MidwifeSyncService.generateSamplePayloadByMode(QrTransferMode.fullJson);
+      expect(fullJsonPayload.startsWith('{'), isTrue);
+      final fullJsonResult = await service.processQrPayload(fullJsonPayload);
+      expect(fullJsonResult.isSuccess, isTrue);
+      expect(fullJsonResult.motherName, rawMap['name']);
+    });
+
     test('MidwifeSyncService successfully parses and persists real midwife QR payload (Ananya Devi, #8842)', () async {
       bool saved = false;
       final service = MidwifeSyncService(

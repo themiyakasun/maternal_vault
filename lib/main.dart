@@ -21,7 +21,9 @@ import 'features/partner/domain/emergency_plan.dart';
 import 'features/partner/domain/partner_agenda.dart';
 import 'features/partner/domain/partner_summary.dart';
 import 'features/partner/presentation/screens/connect_mother_record_screen.dart';
+import 'features/partner/presentation/screens/partner_qr_scanner_screen.dart';
 import 'features/partner/presentation/screens/partner_shell_screen.dart';
+import 'features/partner/presentation/widgets/partner_connect_sheet.dart';
 import 'features/splash/presentation/screens/splash_screen.dart';
 import 'features/welcome/domain/user_role.dart';
 import 'features/welcome/presentation/screens/welcome_screen.dart';
@@ -140,10 +142,8 @@ class _MaternalVaultAppState extends State<MaternalVaultApp> {
         // the wrong role should land back on the role step.
         _navigator.push(
           ConnectMotherRecordScreen.route(
-            // TODO: replace with real scanning/pairing. Both currently just open
-            // the partner shell so the flow is walkable end to end.
-            onScanNow: _openPartnerShell,
-            onEnterCode: _openPartnerShell,
+            onScanNow: _openPartnerScanner,
+            onEnterCode: _openPartnerManualEntry,
           ),
         );
     }
@@ -158,16 +158,44 @@ class _MaternalVaultAppState extends State<MaternalVaultApp> {
     );
   }
 
+  void _openPartnerScanner() async {
+    final result = await _navigator.push<PartnerConnectionData?>(
+      PartnerQrScannerScreen.route(),
+    );
+    if (result != null) {
+      _openPartnerShell(
+        summary: result.summary,
+        agenda: result.agenda,
+        emergencyPlan: result.emergencyPlan,
+      );
+    }
+  }
+
+  void _openPartnerManualEntry() async {
+    final context = _navigatorKey.currentContext;
+    if (context == null) return;
+    final result = await PartnerConnectSheet.show(context);
+    if (result != null) {
+      _openPartnerShell(
+        summary: result.summary,
+        agenda: result.agenda,
+        emergencyPlan: result.emergencyPlan,
+      );
+    }
+  }
+
   /// Replaces the connect screen rather than stacking on it — pairing is done
   /// by now and there is nothing to return to.
-  void _openPartnerShell() {
+  void _openPartnerShell({
+    PartnerSummary summary = const PartnerSummary.sample(),
+    PartnerAgenda? agenda,
+    EmergencyPlan emergencyPlan = const EmergencyPlan.sample(),
+  }) {
     _navigator.pushReplacement(
       PartnerShellScreen.route(
-        // Demo data until the connected record is read — see the .sample
-        // constructors.
-        summary: const PartnerSummary.sample(),
-        agenda: PartnerAgenda.sample(),
-        emergencyPlan: const EmergencyPlan.sample(),
+        summary: summary,
+        agenda: agenda ?? PartnerAgenda.sample(),
+        emergencyPlan: emergencyPlan,
       ),
     );
   }

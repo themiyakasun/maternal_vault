@@ -18,8 +18,13 @@ import 'medical_history_screen.dart';
 import 'midwife_sync_scanner_screen.dart';
 import 'obstetric_history_screen.dart';
 import 'plan_screen.dart';
+import 'mother_settings_screen.dart';
+import 'mother_notifications_screen.dart';
+import '../widgets/model_alert_dialog.dart';
 import '../../data/services/midwife_sync_service.dart';
 import '../../../../data/datasources/encrypted_db_helper.dart';
+import '../../../../data/models/model_notification.dart';
+import '../../../../data/services/model_notification_service.dart';
 
 /// The mother's app once setup is done: one header, five sections, one bottom
 /// bar.
@@ -42,6 +47,8 @@ class MotherShellScreen extends StatefulWidget {
     this.onChangeObstetric,
     this.onChangeClinic,
     this.onSavePlan,
+    this.onOpenNotifications,
+    this.enableDefaultNotifications = false,
     this.initialTab = MotherTab.profile,
   });
 
@@ -82,6 +89,12 @@ class MotherShellScreen extends StatefulWidget {
   /// Passed through to [PlanScreen.onSave].
   final ValueChanged<DeliveryPlan>? onSavePlan;
 
+  /// Opens the notifications screen.
+  final VoidCallback? onOpenNotifications;
+
+  /// Whether to route to [MotherNotificationsScreen] by default when [onOpenNotifications] is null.
+  final bool enableDefaultNotifications;
+
   /// Which section to open on. A param so a notification or a deep link can
   /// land somewhere other than Profile later.
   final MotherTab initialTab;
@@ -101,6 +114,8 @@ class MotherShellScreen extends StatefulWidget {
     ValueChanged<ObstetricHistory>? onChangeObstetric,
     ValueChanged<ClinicRecord>? onChangeClinic,
     ValueChanged<DeliveryPlan>? onSavePlan,
+    VoidCallback? onOpenNotifications,
+    bool enableDefaultNotifications = true,
   }) {
     return PageRouteBuilder<void>(
       transitionDuration: const Duration(milliseconds: 450),
@@ -118,6 +133,8 @@ class MotherShellScreen extends StatefulWidget {
         onChangeObstetric: onChangeObstetric,
         onChangeClinic: onChangeClinic,
         onSavePlan: onSavePlan,
+        onOpenNotifications: onOpenNotifications,
+        enableDefaultNotifications: enableDefaultNotifications,
       ),
       transitionsBuilder:
           (BuildContext context, Animation<double> animation, _, Widget child) {
@@ -139,6 +156,43 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
   late ClinicRecord _clinic = widget.clinic;
   late DeliveryPlan _plan = widget.plan;
   int _syncEpoch = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    ModelNotificationService.instance.latestAlertNotifier
+        .addListener(_onModelAlertEmitted);
+  }
+
+  @override
+  void dispose() {
+    ModelNotificationService.instance.latestAlertNotifier
+        .removeListener(_onModelAlertEmitted);
+    super.dispose();
+  }
+
+  void _onModelAlertEmitted() {
+    final ModelNotification? alert =
+        ModelNotificationService.instance.latestAlertNotifier.value;
+    if (alert != null &&
+        mounted &&
+        (alert.severity == AlertSeverity.high ||
+            alert.severity == AlertSeverity.critical)) {
+      ModelAlertDialog.show(context, alert);
+    }
+  }
+
+  void _openNotifications() {
+    Navigator.of(context).push(
+      MotherNotificationsScreen.route(
+        profile: _profile,
+        vitals: _vitals,
+        history: _history,
+        obstetric: _obstetric,
+        clinic: _clinic,
+      ),
+    );
+  }
 
   @override
   void didUpdateWidget(MotherShellScreen oldWidget) {
@@ -176,6 +230,15 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
       widget.onChangeObstetric?.call(syncedData.obstetricHistory);
       widget.onChangeClinic?.call(syncedData.clinicRecord);
       widget.onSavePlan?.call(syncedData.deliveryPlan);
+
+      // Trigger AI model evaluation on newly synced clinical record
+      ModelNotificationService.instance.evaluateAndAlert(
+        profile: _profile,
+        vitals: _vitals,
+        history: _history,
+        obstetric: _obstetric,
+        clinic: _clinic,
+      );
       return;
     }
 
@@ -205,6 +268,15 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
       if (result.deliveryPlan != null) {
         widget.onSavePlan?.call(result.deliveryPlan!);
       }
+
+      // Trigger AI model evaluation on newly synced clinical record
+      ModelNotificationService.instance.evaluateAndAlert(
+        profile: _profile,
+        vitals: _vitals,
+        history: _history,
+        obstetric: _obstetric,
+        clinic: _clinic,
+      );
     }
   }
 
@@ -221,6 +293,43 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
     } catch (e) {
       debugPrint('Error auto-persisting shell state: $e');
     }
+  }
+
+  void _openSettings() async {
+    await Navigator.of(context).push(
+      MotherSettingsScreen.route(
+        profile: _profile,
+        vitals: _vitals,
+        deliveryPlan: _plan,
+        clinicRecord: _clinic,
+        onLanguageChanged: widget.onLanguageChanged,
+        onRecordUpdated: () async {
+          final syncedData = await EncryptedDatabaseHelper.loadSyncedData();
+          if (syncedData != null && mounted) {
+            setState(() {
+              _syncEpoch++;
+              _profile = syncedData.profile;
+              _vitals = syncedData.vitals;
+              _history = syncedData.medicalHistory;
+              _obstetric = syncedData.obstetricHistory;
+              _clinic = syncedData.clinicRecord;
+              _plan = syncedData.deliveryPlan;
+            });
+          }
+        },
+        onResetVault: () {
+          setState(() {
+            _syncEpoch++;
+            _profile = const BasicProfile.empty();
+            _vitals = const KeyVitals.empty();
+            _history = const MedicalHistory.empty();
+            _obstetric = const ObstetricHistory.empty();
+            _clinic = const ClinicRecord.empty();
+            _plan = const DeliveryPlan.empty();
+          });
+        },
+      ),
+    );
   }
 
   @override
@@ -243,6 +352,11 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
                   title: _headerTitle(l10n, _tab),
                   onChangeLanguage: _changeLanguage,
                   onScanQr: _openQrScanner,
+                  onOpenSettings: _openSettings,
+                  onOpenNotifications: widget.onOpenNotifications ??
+                      (widget.enableDefaultNotifications
+                          ? _openNotifications
+                          : null),
                 ),
                 Expanded(
                   // IndexedStack rather than a swap: every tab stays mounted, so

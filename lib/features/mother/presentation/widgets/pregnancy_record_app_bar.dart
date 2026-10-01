@@ -4,6 +4,7 @@ import '../../../../core/constants/app_colors.dart';
 import '../../../../core/constants/app_text_styles.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/brand_logo_mark.dart';
+import '../../../../data/services/model_notification_service.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 
 /// The header above every tab of the mother's record: the mark, the section's
@@ -19,6 +20,7 @@ class PregnancyRecordAppBar extends StatelessWidget {
     required this.onChangeLanguage,
     this.onOpenNotifications,
     this.onScanQr,
+    this.onOpenSettings,
   });
 
   /// What section you are in. Supplied by the shell rather than fixed here, so a
@@ -35,6 +37,9 @@ class PregnancyRecordAppBar extends StatelessWidget {
 
   /// Opens the Midwife QR scanner screen to synchronize clinical records.
   final VoidCallback? onScanQr;
+
+  /// Opens the Mother's Settings screen.
+  final VoidCallback? onOpenSettings;
 
   @override
   Widget build(BuildContext context) {
@@ -68,10 +73,23 @@ class PregnancyRecordAppBar extends StatelessWidget {
             label: l10n.actionChangeLanguage,
             onPressed: onChangeLanguage,
           ),
-          _HeaderAction(
-            icon: Icons.notifications_none_rounded,
-            label: l10n.actionNotifications,
-            onPressed: onOpenNotifications,
+          if (onOpenSettings != null)
+            _HeaderAction(
+              icon: Icons.settings_outlined,
+              label: 'Settings',
+              onPressed: onOpenSettings,
+            ),
+          ValueListenableBuilder<int>(
+            valueListenable:
+                ModelNotificationService.instance.unreadCountNotifier,
+            builder: (BuildContext context, int unreadCount, _) {
+              return _HeaderAction(
+                icon: Icons.notifications_none_rounded,
+                label: l10n.actionNotifications,
+                onPressed: onOpenNotifications,
+                badgeCount: unreadCount,
+              );
+            },
           ),
         ],
       ),
@@ -85,17 +103,29 @@ class _HeaderAction extends StatelessWidget {
     required this.icon,
     required this.label,
     required this.onPressed,
+    this.badgeCount = 0,
   });
 
   final IconData icon;
   final String label;
   final VoidCallback? onPressed;
+  final int badgeCount;
 
   @override
   Widget build(BuildContext context) {
+    Widget iconWidget = Icon(icon, size: 22);
+    if (badgeCount > 0) {
+      iconWidget = Badge.count(
+        count: badgeCount,
+        backgroundColor: AppColors.primary,
+        textColor: Colors.white,
+        child: iconWidget,
+      );
+    }
+
     return IconButton(
       onPressed: onPressed,
-      icon: Icon(icon, size: 22),
+      icon: iconWidget,
       tooltip: label,
       // Both colours are restated: styleFrom drops the theme's disabled pair as
       // soon as an enabled one is supplied, which would leave the not-yet-built

@@ -12,6 +12,12 @@ import 'package:maternal_vault/features/mother/domain/medical_history.dart';
 import 'package:maternal_vault/features/mother/domain/obstetric_history.dart';
 import 'package:maternal_vault/features/mother/domain/transport_mode.dart';
 
+enum QrTransferMode {
+  cameraLink,
+  gzipCompressed,
+  fullJson,
+}
+
 @immutable
 class SyncResult {
   const SyncResult({
@@ -27,6 +33,8 @@ class SyncResult {
     this.obstetricHistory,
     this.clinicRecord,
     this.deliveryPlan,
+    this.isCameraLink = false,
+    this.cameraLinkUrl,
   });
 
   final bool isSuccess;
@@ -41,6 +49,8 @@ class SyncResult {
   final ObstetricHistory? obstetricHistory;
   final ClinicRecord? clinicRecord;
   final DeliveryPlan? deliveryPlan;
+  final bool isCameraLink;
+  final String? cameraLinkUrl;
 }
 
 typedef SaveSyncDataCallback = Future<void> Function({
@@ -74,7 +84,23 @@ class MidwifeSyncService {
         );
       }
 
-      // Try decoding payload using QrPayloadCompressor (handles compressed, minified, and legacy JSON)
+      // Detect Phone Camera Pass web URL link
+      if (QrPayloadCompressor.isWebUrl(trimmed)) {
+        final uri = Uri.tryParse(trimmed);
+        final embeddedData =
+            uri?.queryParameters['data'] ?? uri?.queryParameters['payload'];
+        if (embeddedData != null && embeddedData.isNotEmpty) {
+          return processQrPayload(Uri.decodeComponent(embeddedData));
+        }
+        return SyncResult(
+          isSuccess: false,
+          isCameraLink: true,
+          cameraLinkUrl: trimmed,
+          message: 'Phone Camera Pass link detected: $trimmed',
+        );
+      }
+
+      // Try decoding payload using QrPayloadCompressor (handles Gzip, Zlib, minified, and legacy JSON)
       Map<String, dynamic> jsonMap;
       try {
         jsonMap = QrPayloadCompressor.decompress(trimmed);
@@ -206,11 +232,48 @@ class MidwifeSyncService {
           }
         }
 
+        final (vitalsSys, vitalsDia) =
+            _parseBloodPressure(rawVitals['bp'] ?? jsonMap['bp']);
+        final Map<String, dynamic> rawLabsPreview =
+            jsonMap['investigations'] is Map<String, dynamic>
+                ? jsonMap['investigations'] as Map<String, dynamic>
+                : <String, dynamic>{};
+        final double? vitalsBsMgDl = _parseBloodSugarMgDl(
+          rawVitals['bloodSugarMgDl'] ??
+              rawVitals['bs'] ??
+              rawVitals['bloodSugar'] ??
+              jsonMap['bs'] ??
+              jsonMap['bloodSugarMgDl'] ??
+              rawLabsPreview['bloodSugar'] ??
+              rawLabsPreview['sugar'],
+        );
+        final double? vitalsTempF = _parseBodyTempF(
+          rawVitals['bodyTempF'] ??
+              rawVitals['temp'] ??
+              rawVitals['bodyTemp'] ??
+              rawVitals['temperature'] ??
+              jsonMap['temp'] ??
+              jsonMap['bodyTempF'],
+        );
+        final int? vitalsMaternalHr = _parseNumericPrefix(
+          rawVitals['maternalHeartRate'] ??
+              rawVitals['hr'] ??
+              rawVitals['heartRate'] ??
+              rawVitals['pulse'] ??
+              jsonMap['hr'] ??
+              jsonMap['maternalHeartRate'],
+        );
+
         vitals = KeyVitals(
           bmi: bmiStr,
           bloodGroup: bloodGroupStr,
           heightCm: heightVal,
           allergies: allergiesVal,
+          systolicBp: vitalsSys?.toDouble(),
+          diastolicBp: vitalsDia?.toDouble(),
+          bloodSugarMgDl: vitalsBsMgDl,
+          bodyTempF: vitalsTempF,
+          maternalHeartRate: vitalsMaternalHr,
         );
 
         // --- 3. MedicalHistory from Dashboard / Notes ---
@@ -340,6 +403,9 @@ class MidwifeSyncService {
           weightKg: (rawVitals['weight'] as num?)?.toDouble(),
           fundalHeightCm: fundalCm,
           fetalHeartRate: fhr,
+          maternalHeartRate: vitalsMaternalHr,
+          bodyTempF: vitalsTempF,
+          bloodSugarMgDl: vitalsBsMgDl,
           urineAlbumin: urineAlb,
           urineSugar: UrineReading.nil,
           pallor: false,
@@ -358,8 +424,13 @@ class MidwifeSyncService {
 
         // Parse multiple visits if array is provided
         final rawVisits = jsonMap['visits'] ?? jsonMap['clinicalVisits'];
-        final List<ClinicVisit> parsedVisits =
-            _parseVisitsList(rawVisits, midwifeName);
+        final List<ClinicVisit> parsedVisits = _parseVisitsList(
+          rawVisits,
+          midwifeName,
+          defaultMaternalHr: vitalsMaternalHr,
+          defaultBodyTempF: vitalsTempF,
+          defaultBloodSugarMgDl: vitalsBsMgDl,
+        );
 
         final List<ClinicVisit> allVisits = <ClinicVisit>[];
         if (parsedVisits.isNotEmpty) {
@@ -688,7 +759,7 @@ class MidwifeSyncService {
   }
 
   /// Generates a realistic sample sync payload matching the midwife dashboard export.
-  static String generateSamplePayload({bool compressed = true}) {
+  static String generateSamplePayload({bool compressed = true, bool useGzip = false}) {
     final samplePayload = <String, dynamic>{
       'app': 'MaternaVault',
       'ver': '1.2.0',
@@ -710,6 +781,9 @@ class MidwifeSyncService {
         'hb': 11.8,
         'bmi': 27.4,
         'fhr': '140 bpm',
+        'hr': 78,
+        'temp': 98.4,
+        'bs': 84.0,
         'weight': 68.5,
         'bloodGroup': 'B +ve',
         'height': '158',
@@ -903,9 +977,26 @@ class MidwifeSyncService {
     };
 
     if (compressed) {
-      return QrPayloadCompressor.compress(samplePayload);
+      return useGzip
+          ? QrPayloadCompressor.compressGzip(samplePayload)
+          : QrPayloadCompressor.compress(samplePayload);
     }
     return jsonEncode(samplePayload);
+  }
+
+  /// Generates a sample payload matching one of the 3 dedicated QR transfer modes:
+  /// 1. [QrTransferMode.gzipCompressed]: Gzip Ultra-Fast QR (`MVZ1:GZ:<base64url>`)
+  /// 2. [QrTransferMode.cameraLink]: Phone Camera Pass (`https://maternavault.gov.lk/records/#6720`)
+  /// 3. [QrTransferMode.fullJson]: JSON Vault (complete uncompressed raw JSON payload)
+  static String generateSamplePayloadByMode(QrTransferMode mode) {
+    switch (mode) {
+      case QrTransferMode.cameraLink:
+        return 'https://maternavault.gov.lk/records/#6720';
+      case QrTransferMode.gzipCompressed:
+        return generateSamplePayload(compressed: true, useGzip: true);
+      case QrTransferMode.fullJson:
+        return generateSamplePayload(compressed: false);
+    }
   }
 
   static DateTime? _parseFlexibleDate(dynamic value) {
@@ -991,6 +1082,57 @@ class MidwifeSyncService {
       return int.tryParse(match.group(1)!);
     }
     return null;
+  }
+
+  /// Parses quantitative blood glucose and harmonizes units to mg/dL.
+  /// If the extracted value is < 20.0 (indicating mmol/L), multiplies by 18.0.
+  static double? _parseBloodSugarMgDl(dynamic val) {
+    if (val == null) return null;
+    double? parsed;
+    if (val is num) {
+      parsed = val.toDouble();
+    } else {
+      final str = val.toString();
+      // Prefer matching "Fasting: 84" or the first decimal/number
+      final fastingMatch =
+          RegExp(r'fasting[^0-9]*(\d+(?:\.\d+)?)', caseSensitive: false)
+              .firstMatch(str);
+      if (fastingMatch != null) {
+        parsed = double.tryParse(fastingMatch.group(1)!);
+      } else {
+        final numMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(str);
+        if (numMatch != null) {
+          parsed = double.tryParse(numMatch.group(1)!);
+        }
+      }
+    }
+    if (parsed == null || parsed <= 0) return null;
+    // Unit harmonization: mmol/L (< 20.0) -> mg/dL (* 18.0)
+    if (parsed < 20.0) {
+      return double.parse((parsed * 18.0).toStringAsFixed(1));
+    }
+    return parsed;
+  }
+
+  /// Parses quantitative maternal body temperature and harmonizes units to °F.
+  /// If the extracted value is < 45.0 (indicating °C), converts via (T * 1.8) + 32.0.
+  static double? _parseBodyTempF(dynamic val) {
+    if (val == null) return null;
+    double? parsed;
+    if (val is num) {
+      parsed = val.toDouble();
+    } else {
+      final numMatch = RegExp(r'(\d+(?:\.\d+)?)').firstMatch(val.toString());
+      if (numMatch != null) {
+        parsed = double.tryParse(numMatch.group(1)!);
+      }
+    }
+    if (parsed == null || parsed <= 0) return null;
+    // Unit harmonization: °C (< 45.0) -> °F
+    if (parsed < 45.0) {
+      return double.parse(((parsed * 1.8) + 32.0).toStringAsFixed(1));
+    }
+    return parsed;
   }
 
   static UrineReading? _parseUrineAlbumin(
@@ -1122,7 +1264,12 @@ class MidwifeSyncService {
   }
 
   static List<ClinicVisit> _parseVisitsList(
-      dynamic raw, String midwifeName) {
+    dynamic raw,
+    String midwifeName, {
+    int? defaultMaternalHr,
+    double? defaultBodyTempF,
+    double? defaultBloodSugarMgDl,
+  }) {
     if (raw is! List) return const <ClinicVisit>[];
     final List<ClinicVisit> list = <ClinicVisit>[];
     for (final dynamic item in raw) {
@@ -1147,6 +1294,24 @@ class MidwifeSyncService {
         }
       }
       final fhr = _parseNumericPrefix(map['fhr'] ?? map['fetalHeartRate']);
+      final maternalHr = _parseNumericPrefix(
+            map['maternalHeartRate'] ??
+                map['hr'] ??
+                map['heartRate'] ??
+                map['pulse'],
+          ) ??
+          defaultMaternalHr;
+      final bodyTempF = _parseBodyTempF(
+            map['bodyTempF'] ??
+                map['temp'] ??
+                map['bodyTemp'] ??
+                map['temperature'],
+          ) ??
+          defaultBodyTempF;
+      final bloodSugarMgDl = _parseBloodSugarMgDl(
+            map['bloodSugarMgDl'] ?? map['bs'] ?? map['bloodSugar'],
+          ) ??
+          defaultBloodSugarMgDl;
       final weightVal = (map['weight'] ?? map['weightKg']) is num
           ? ((map['weight'] ?? map['weightKg']) as num).toDouble()
           : double.tryParse(
@@ -1206,6 +1371,9 @@ class MidwifeSyncService {
         weightKg: weightVal,
         fundalHeightCm: fundalCm,
         fetalHeartRate: fhr,
+        maternalHeartRate: maternalHr,
+        bodyTempF: bodyTempF,
+        bloodSugarMgDl: bloodSugarMgDl,
         urineAlbumin: urineAlb,
         urineSugar: urineSugar,
         pallor: map['pallor'] as bool? ?? false,
@@ -1411,6 +1579,15 @@ class MidwifeSyncService {
     if (c['bp'] != null) vitals['bp'] = c['bp'];
     if (c['hb'] != null) vitals['hb'] = c['hb'];
     if (c['fhr'] != null) vitals['fhr'] = c['fhr'];
+    if (c['hr'] != null || c['maternalHeartRate'] != null || c['pulse'] != null) {
+      vitals['hr'] = c['hr'] ?? c['maternalHeartRate'] ?? c['pulse'];
+    }
+    if (c['temp'] != null || c['bodyTemp'] != null || c['temperature'] != null) {
+      vitals['temp'] = c['temp'] ?? c['bodyTemp'] ?? c['temperature'];
+    }
+    if (c['bs'] != null || c['bloodSugar'] != null) {
+      vitals['bs'] = c['bs'] ?? c['bloodSugar'];
+    }
     if (c['wt'] != null) vitals['weight'] = c['wt'];
     if (c['bg'] != null) vitals['bloodGroup'] = c['bg'];
 
@@ -1468,7 +1645,10 @@ class MidwifeSyncService {
       if (lrMap['rb'] != null) labs['rubella'] = lrMap['rb'];
       if (lrMap['hv'] != null) labs['hiv'] = lrMap['hv'];
       if (lrMap['hb'] != null) labs['hepatitisB'] = lrMap['hb'];
-      if (lrMap['fs'] != null) labs['bloodSugar'] = 'Fasting: ${lrMap['fs']}';
+      if (lrMap['fs'] != null) {
+        labs['bloodSugar'] = 'Fasting: ${lrMap['fs']}';
+        vitals['bs'] ??= lrMap['fs'];
+      }
       if (lrMap['ua'] != null) labs['urineAlbumin'] = lrMap['ua'];
       if (lrMap['us'] != null) labs['urineSugar'] = lrMap['us'];
       if (c['hb'] != null) labs['hb'] = c['hb'];

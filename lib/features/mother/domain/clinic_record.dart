@@ -32,6 +32,9 @@ class ClinicVisit {
     this.weightKg,
     this.fundalHeightCm,
     this.fetalHeartRate,
+    this.maternalHeartRate,
+    this.bodyTempF,
+    this.bloodSugarMgDl,
     this.urineSugar,
     this.urineAlbumin,
     this.pallor,
@@ -68,6 +71,15 @@ class ClinicVisit {
 
   /// Fetal heart sounds, in beats per minute.
   final int? fetalHeartRate;
+
+  /// Maternal resting pulse / heart rate in beats per minute (bpm).
+  final int? maternalHeartRate;
+
+  /// Maternal core body temperature in degrees Fahrenheit (°F).
+  final double? bodyTempF;
+
+  /// Quantitative maternal blood glucose in mg/dL.
+  final double? bloodSugarMgDl;
 
   final UrineReading? urineSugar;
   final UrineReading? urineAlbumin;
@@ -108,6 +120,9 @@ class ClinicVisit {
       if (weightKg != null) 'weightKg': weightKg,
       if (fundalHeightCm != null) 'fundalHeightCm': fundalHeightCm,
       if (fetalHeartRate != null) 'fetalHeartRate': fetalHeartRate,
+      if (maternalHeartRate != null) 'maternalHeartRate': maternalHeartRate,
+      if (bodyTempF != null) 'bodyTempF': bodyTempF,
+      if (bloodSugarMgDl != null) 'bloodSugarMgDl': bloodSugarMgDl,
       if (urineSugar != null) 'urineSugar': urineSugar!.name,
       if (urineAlbumin != null) 'urineAlbumin': urineAlbumin!.name,
       if (pallor != null) 'pallor': pallor,
@@ -140,6 +155,9 @@ class ClinicVisit {
       weightKg: (json['weightKg'] as num?)?.toDouble(),
       fundalHeightCm: json['fundalHeightCm'] as int?,
       fetalHeartRate: json['fetalHeartRate'] as int?,
+      maternalHeartRate: (json['maternalHeartRate'] as num?)?.toInt(),
+      bodyTempF: (json['bodyTempF'] as num?)?.toDouble(),
+      bloodSugarMgDl: (json['bloodSugarMgDl'] as num?)?.toDouble(),
       urineSugar: json['urineSugar'] != null
           ? UrineReading.values.asNameMap()[json['urineSugar']]
           : null,

@@ -4,11 +4,14 @@ import 'package:maternal_vault/core/security/hardware_key_manager.dart';
 import 'package:maternal_vault/features/mother/domain/basic_profile.dart';
 import 'package:maternal_vault/features/mother/domain/clinic_record.dart';
 import 'package:maternal_vault/features/mother/domain/delivery_plan.dart';
+import 'package:maternal_vault/features/mother/domain/epds_screening.dart';
 import 'package:maternal_vault/features/mother/domain/key_vitals.dart';
 import 'package:maternal_vault/features/mother/domain/medical_history.dart';
 import 'package:maternal_vault/features/mother/domain/obstetric_history.dart';
 import 'package:path/path.dart';
 import 'package:sqflite_sqlcipher/sqflite.dart';
+
+import '../models/model_notification.dart';
 
 class EncryptedDatabaseHelper {
   static const String dbName = 'maternal_vault.db';
@@ -128,6 +131,35 @@ class EncryptedDatabaseHelper {
         midwife_name TEXT,
         record_version INTEGER,
         payload_hash TEXT
+      );
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS model_notifications (
+        id TEXT PRIMARY KEY,
+        model_type TEXT,
+        severity TEXT,
+        title TEXT,
+        message TEXT,
+        recommendations_json TEXT,
+        created_at TEXT,
+        is_read INTEGER,
+        metrics_json TEXT
+      );
+    ''');
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS moods (
+        id TEXT PRIMARY KEY,
+        epds_score INTEGER,
+        anxiety_score INTEGER,
+        sleep_disturbed INTEGER,
+        reported_fatigue INTEGER,
+        daily_mood TEXT,
+        symptoms_json TEXT,
+        responses_json TEXT,
+        notes TEXT,
+        created_at TEXT
       );
     ''');
   }
@@ -355,6 +387,7 @@ class EncryptedDatabaseHelper {
       await txn.delete('obstetric_history');
       await txn.delete('delivery_plan');
       await txn.delete('sync_audit_log');
+      await txn.delete('moods');
     });
   }
 
@@ -404,5 +437,99 @@ class EncryptedDatabaseHelper {
   static Future<List<Map<String, Object?>>> getMotherProfiles() async {
     final db = await database;
     return await db.query('mother_profile');
+  }
+
+  /// Saves or updates a model notification in the encrypted database.
+  static Future<void> saveModelNotification(ModelNotification notification) async {
+    final db = await database;
+    await db.insert(
+      'model_notifications',
+      notification.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Retrieves all notifications emitted by models, ordered newest first.
+  static Future<List<ModelNotification>> getModelNotifications() async {
+    final db = await database;
+    final List<Map<String, Object?>> maps = await db.query(
+      'model_notifications',
+      orderBy: 'created_at DESC',
+    );
+    return maps.map((m) => ModelNotification.fromMap(m)).toList();
+  }
+
+  /// Marks a specific model notification as read.
+  static Future<void> markModelNotificationAsRead(String id) async {
+    final db = await database;
+    await db.update(
+      'model_notifications',
+      {'is_read': 1},
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  /// Marks all model notifications as read.
+  static Future<void> markAllModelNotificationsAsRead() async {
+    final db = await database;
+    await db.update(
+      'model_notifications',
+      {'is_read': 1},
+    );
+  }
+
+  /// Deletes a specific model notification.
+  static Future<void> deleteModelNotification(String id) async {
+    final db = await database;
+    await db.delete(
+      'model_notifications',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+  }
+
+  /// Clears all stored model notifications.
+  static Future<void> clearModelNotifications() async {
+    final db = await database;
+    await db.delete('model_notifications');
+  }
+
+  /// Saves a 10-item EPDS self-screening and daily mood/symptom entry into `moods`.
+  static Future<void> saveMoodScreening(EpdsScreeningEntry entry) async {
+    final db = await database;
+    await db.insert(
+      'moods',
+      entry.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.replace,
+    );
+  }
+
+  /// Retrieves all EPDS self-screening & daily symptom logs from `moods` newest first.
+  static Future<List<EpdsScreeningEntry>> getMoodScreenings() async {
+    final db = await database;
+    final List<Map<String, Object?>> rows = await db.query(
+      'moods',
+      orderBy: 'created_at DESC',
+    );
+    return rows.map((Map<String, Object?> r) => EpdsScreeningEntry.fromMap(r)).toList();
+  }
+
+  /// Retrieves the most recent EPDS self-screening & daily mood log, or null if none.
+  static Future<EpdsScreeningEntry?> getLatestMoodScreening() async {
+    final db = await database;
+    final List<Map<String, Object?>> rows = await db.query(
+      'moods',
+      orderBy: 'created_at DESC',
+      limit: 1,
+    );
+    if (rows.isEmpty) return null;
+    return EpdsScreeningEntry.fromMap(rows.first);
+  }
+
+  /// Clears all stored EPDS mood and symptom logs.
+  static Future<void> clearMoodScreenings() async {
+    final db = await database;
+    await db.delete('moods');
   }
 }
