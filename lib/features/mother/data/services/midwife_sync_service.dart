@@ -107,7 +107,7 @@ class MidwifeSyncService {
         final embeddedData =
             uri?.queryParameters['data'] ?? uri?.queryParameters['payload'];
         if (embeddedData != null && embeddedData.isNotEmpty) {
-          return processQrPayload(Uri.decodeComponent(embeddedData));
+          return await processQrPayload(Uri.decodeComponent(embeddedData));
         }
         return SyncResult(
           isSuccess: false,
