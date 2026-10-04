@@ -4,14 +4,20 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:maternal_vault/core/theme/app_theme.dart';
 import 'package:maternal_vault/data/models/models.dart';
 import 'package:maternal_vault/data/services/model_notification_service.dart';
+import 'package:maternal_vault/features/mother/data/services/midwife_sync_service.dart';
 import 'package:maternal_vault/features/mother/domain/basic_profile.dart';
 import 'package:maternal_vault/features/mother/domain/clinic_record.dart';
+import 'package:maternal_vault/features/mother/domain/delivery_plan.dart';
 import 'package:maternal_vault/features/mother/domain/epds_screening.dart';
 import 'package:maternal_vault/features/mother/domain/key_vitals.dart';
 import 'package:maternal_vault/features/mother/domain/medical_history.dart';
 import 'package:maternal_vault/features/mother/domain/obstetric_history.dart';
+import 'package:maternal_vault/features/mother/domain/read_only_immutability_guard.dart';
+import 'package:maternal_vault/features/mother/presentation/screens/basic_profile_screen.dart';
 import 'package:maternal_vault/features/mother/presentation/screens/epds_screening_screen.dart';
+import 'package:maternal_vault/features/mother/presentation/screens/medical_history_screen.dart';
 import 'package:maternal_vault/features/mother/presentation/screens/mother_notifications_screen.dart';
+import 'package:maternal_vault/features/mother/presentation/screens/plan_screen.dart';
 import 'package:maternal_vault/features/mother/presentation/widgets/model_alert_dialog.dart';
 import 'package:maternal_vault/l10n/generated/app_localizations.dart';
 
@@ -200,10 +206,32 @@ void main() {
 
       expect(result.isElevated, isTrue);
       expect(result.probability, greaterThan(0.30));
+      expect(result.inputVector.length, 37);
+      // Verify slots 4..36 have exactly 9 active one-hot encoded categorical features (not zeros)
+      final activeOneHots =
+          result.inputVector.sublist(4).where((v) => v == 1.0).length;
+      expect(activeOneHots, 9);
+      // Verify slot 1 is StandardScaler(previous_c_sections), NOT currentWeek / 42.0 (28 / 42.0 = 0.6667)
+      expect(result.inputVector[1], isNot(closeTo(28.0 / 42.0, 0.01)));
+
       final notification = result.toNotification();
       expect(notification, isNotNull);
       expect(notification!.modelType, ModelType.pretermRisk);
       expect(notification.recommendations.any((r) => r.contains('cramping') || r.contains('contractions')), isTrue);
+    });
+
+    test('maps 13 SINASC features into 37-element tensor using feature_metadata.json and imputer.pkl', () async {
+      final meta = await OnDeviceFeatureVectorAdapter.loadMetadata();
+      expect(meta['preterm_model'], isNotNull);
+      expect(OnDeviceFeatureVectorAdapter.isImputerVerified, isTrue);
+
+      final result = await model.evaluate(
+        profile: BasicProfile.sample(),
+        vitals: const KeyVitals.sample(),
+      );
+      expect(result.inputVector.length, 37);
+      // Slots 7..36 must have active one-hot features rather than all 0.0
+      expect(result.inputVector.sublist(7).any((v) => v == 1.0), isTrue);
     });
   });
 
@@ -218,7 +246,7 @@ void main() {
       model.dispose();
     });
 
-    test('evaluates low EPDS score as low risk', () async {
+    test('evaluates low EPDS score as low risk and maps 64 features into 245-element tensor', () async {
       final result = await model.evaluate(
         epdsScore: 2,
         anxietyScore: 1,
@@ -228,6 +256,11 @@ void main() {
       expect(result.severity, AlertSeverity.low);
       expect(result.isElevated, isFalse);
       expect(result.toNotification(), isNull);
+      expect(result.inputVector.length, 245);
+      // Verify slots 5..244 contain 59 active one-hot encoded survey features (not zeros)
+      final activeOneHots =
+          result.inputVector.sublist(5).where((v) => v == 1.0).length;
+      expect(activeOneHots, 59);
     });
 
     test('evaluates elevated EPDS score (>= 13) as high risk requiring support', () async {
@@ -548,5 +581,245 @@ void main() {
       expect(ModelNotificationService.instance.latestMoodScreening!.dailyMood, 'Tired');
       expect(ModelNotificationService.instance.latestMoodScreening!.sleepDisturbed, isTrue);
     });
+  });
+
+  group('ReadOnlyImmutabilityGuard & "ro": 1 Lockout Tests', () {
+    test('ReadOnlyImmutabilityGuard parses "ro": 1 and blocks 100% of mutations', () {
+      expect(
+        ReadOnlyImmutabilityGuard.isPayloadReadOnly(const <String, dynamic>{'ro': 1}),
+        isTrue,
+      );
+      expect(
+        ReadOnlyImmutabilityGuard.isPayloadReadOnly(
+          const <String, dynamic>{'is_clinical_readonly': true},
+        ),
+        isTrue,
+      );
+      expect(
+        ReadOnlyImmutabilityGuard.isPayloadReadOnly(const <String, dynamic>{'ro': 0}),
+        isFalse,
+      );
+
+      const guard = ReadOnlyImmutabilityGuard.locked();
+      expect(guard.isLocked, isTrue);
+      expect(guard.canEdit(), isFalse);
+
+      bool mutated = false;
+      final res = guard.guardMutation(() {
+        mutated = true;
+        return 42;
+      });
+      expect(res, isNull);
+      expect(mutated, isFalse);
+
+      bool callbackCalled = false;
+      final wrapped = guard.guardCallback<String>((_) => callbackCalled = true);
+      expect(wrapped, isNull);
+      expect(callbackCalled, isFalse);
+    });
+
+    test('MidwifeSyncService sample payload contains "ro": 1 and sets isClinicalReadOnly = true', () async {
+      final rawJson = MidwifeSyncService.generateSamplePayload(compressed: false);
+      expect(rawJson.contains('"ro":1'), isTrue);
+
+      bool savedReadOnlyFlag = false;
+      final syncService = MidwifeSyncService(
+        onSaveSyncData: ({
+          required profile,
+          required vitals,
+          medicalHistory = const MedicalHistory.empty(),
+          required obstetricHistory,
+          required clinicRecord,
+          required deliveryPlan,
+          clinicName,
+          midwifeName,
+          version = 1,
+          payloadHash,
+          isClinicalReadOnly = true,
+        }) async {
+          savedReadOnlyFlag = isClinicalReadOnly;
+        },
+      );
+
+      final result = await syncService.processQrPayload(rawJson);
+      expect(result.isSuccess, isTrue);
+      expect(result.isClinicalReadOnly, isTrue);
+      expect(savedReadOnlyFlag, isTrue);
+    });
+
+    testWidgets(
+      'BasicProfileScreen, MedicalHistoryScreen, and PlanScreen enforce 100% edit lockout when isReadOnly is true',
+      (WidgetTester tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+
+        bool profileSubmitted = false;
+        bool historyChanged = false;
+        bool planSaved = false;
+
+        // 1. BasicProfileScreen with isReadOnly: true
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light,
+            localizationsDelegates: const <LocalizationsDelegate<Object>>[
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: Scaffold(
+              body: BasicProfileScreen(
+                profile: BasicProfile.sample(),
+                vitals: const KeyVitals.sample(),
+                isReadOnly: true,
+                onSubmit: (_) => profileSubmitted = true,
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Official MOH Clinical Record (Read-Only)'), findsOneWidget);
+        expect(find.text('Save Profile'), findsNothing);
+        expect(profileSubmitted, isFalse);
+
+        // 2. MedicalHistoryScreen with isReadOnly: true
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light,
+            localizationsDelegates: const <LocalizationsDelegate<Object>>[
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: Scaffold(
+              body: MedicalHistoryScreen(
+                history: const MedicalHistory.empty(),
+                isReadOnly: true,
+                onChanged: (_) => historyChanged = true,
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Official MOH Clinical Record (Read-Only)'), findsOneWidget);
+        await tester.tap(find.text('Diabetes Mellitus'), warnIfMissed: false);
+        await tester.pumpAndSettle();
+        expect(historyChanged, isFalse);
+
+        // 3. PlanScreen with isReadOnly: true
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light,
+            localizationsDelegates: const <LocalizationsDelegate<Object>>[
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: Scaffold(
+              body: PlanScreen(
+                plan: const DeliveryPlan.empty(),
+                isReadOnly: true,
+                onSave: (_) => planSaved = true,
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Official MOH Clinical Record (Read-Only)'), findsOneWidget);
+        expect(find.text('Save Plan'), findsNothing);
+        expect(planSaved, isFalse);
+      },
+    );
+
+    testWidgets(
+      'Local profile and delivery plan entered before first Midwife QR sync remain editable and persist across shell restarts',
+      (WidgetTester tester) async {
+        tester.view.physicalSize = const Size(1080, 2400);
+        tester.view.devicePixelRatio = 1.0;
+        addTearDown(tester.view.reset);
+
+        BasicProfile? persistedProfile;
+        DeliveryPlan? persistedPlan;
+
+        // 1. Mother enters her Delivery Plan manually before first midwife sync (isReadOnly: false)
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light,
+            localizationsDelegates: const <LocalizationsDelegate<Object>>[
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: Scaffold(
+              body: PlanScreen(
+                plan: const DeliveryPlan(
+                  intendedHospital: 'Castle Street Hospital for Women',
+                  distanceKm: 9,
+                ),
+                isReadOnly: false,
+                onSave: (DeliveryPlan saved) => persistedPlan = saved,
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Official MOH Clinical Record (Read-Only)'), findsNothing);
+        expect(find.text('Save Plan'), findsOneWidget);
+        await tester.ensureVisible(find.text('Save Plan'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Save Plan'));
+        await tester.pumpAndSettle();
+
+        expect(persistedPlan, isNotNull);
+        expect(
+          persistedPlan!.intendedHospital,
+          'Castle Street Hospital for Women',
+        );
+        expect(persistedPlan!.distanceKm, 9);
+
+        // 2. Simulate app restart with locally persisted profile & plan before first midwife sync
+        await tester.pumpWidget(
+          MaterialApp(
+            theme: AppTheme.light,
+            localizationsDelegates: const <LocalizationsDelegate<Object>>[
+              AppLocalizations.delegate,
+              GlobalMaterialLocalizations.delegate,
+              GlobalWidgetsLocalizations.delegate,
+              GlobalCupertinoLocalizations.delegate,
+            ],
+            home: Scaffold(
+              body: BasicProfileScreen(
+                profile: const BasicProfile(
+                  motherName: 'Dilani Perera',
+                  address: 'Colombo 08',
+                ),
+                isReadOnly: false,
+                onSubmit: (BasicProfile saved) => persistedProfile = saved,
+              ),
+            ),
+          ),
+        );
+        await tester.pumpAndSettle();
+
+        expect(find.text('Dilani Perera'), findsOneWidget);
+        expect(find.text('Save Profile'), findsOneWidget);
+        await tester.ensureVisible(find.text('Save Profile'));
+        await tester.pumpAndSettle();
+        await tester.tap(find.text('Save Profile'));
+        await tester.pumpAndSettle();
+
+        expect(persistedProfile, isNotNull);
+        expect(persistedProfile!.motherName, 'Dilani Perera');
+        expect(persistedProfile!.address, 'Colombo 08');
+      },
+    );
   });
 }

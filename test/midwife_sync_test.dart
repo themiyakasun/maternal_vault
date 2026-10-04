@@ -90,6 +90,7 @@ void main() {
           String? midwifeName,
           int version = 1,
           String? payloadHash,
+          bool isClinicalReadOnly = true,
         }) async {
           expect(profile.motherName, rawMap['name']);
         },
@@ -128,6 +129,7 @@ void main() {
           String? midwifeName,
           int version = 1,
           String? payloadHash,
+          bool isClinicalReadOnly = true,
         }) async {
           saved = true;
           expect(profile.motherName, 'Ananya Devi');
@@ -219,6 +221,7 @@ void main() {
           String? midwifeName,
           int version = 1,
           String? payloadHash,
+          bool isClinicalReadOnly = true,
         }) async {
           saved = true;
           expect(profile.motherName, 'Ananya Devi');
@@ -335,6 +338,7 @@ void main() {
           String? midwifeName,
           int version = 1,
           String? payloadHash,
+          bool isClinicalReadOnly = true,
         }) async {
           saved = true;
           expect(profile.motherName, 'Kumari Sandamali Perera');
@@ -418,6 +422,7 @@ void main() {
           String? midwifeName,
           int version = 1,
           String? payloadHash,
+          bool isClinicalReadOnly = true,
         }) async {
           saved = true;
           expect(profile.motherName, 'Nimali Perera');
@@ -549,6 +554,7 @@ void main() {
           String? midwifeName,
           int version = 1,
           String? payloadHash,
+          bool isClinicalReadOnly = true,
         }) async {
           saved = true;
           // --- Profile ---
@@ -628,6 +634,209 @@ void main() {
       expect(wrongTypeResult.isSuccess, false);
       expect(wrongTypeResult.message, contains('missing clinical mother records'));
     });
+
+    test(
+      'Parses Thesis Table 4.5 compact key dictionary (pid, age, ga, sbp, dbp, bs, temp, hr, hb, epds, ro, chk) and verifies SHA-256 chk',
+      () async {
+        bool saved = false;
+        final service = MidwifeSyncService(
+          onSaveSyncData: ({
+            required BasicProfile profile,
+            required KeyVitals vitals,
+            MedicalHistory medicalHistory = const MedicalHistory.empty(),
+            required ObstetricHistory obstetricHistory,
+            required ClinicRecord clinicRecord,
+            required DeliveryPlan deliveryPlan,
+            String? clinicName,
+            String? midwifeName,
+            int version = 1,
+            String? payloadHash,
+            bool isClinicalReadOnly = true,
+          }) async {
+            saved = true;
+            expect(profile.nationalId, '199856201458');
+            expect(profile.mother.age, 26);
+            expect(obstetricHistory.poaAtRegistrationWeeks, 32);
+            expect(clinicRecord.visits.first.systolic, 145);
+            expect(clinicRecord.visits.first.diastolic, 95);
+            expect(vitals.bloodSugarMgDl, closeTo(118.8, 0.1));
+            expect(vitals.bodyTempF, closeTo(98.6, 0.1));
+            expect(vitals.maternalHeartRate, 84);
+            expect(clinicRecord.investigations.haemoglobin, 'Hb: 11.4 g/dL');
+            expect(isClinicalReadOnly, true);
+          },
+        );
+
+        final Map<String, dynamic> thesisPayload =
+            QrPayloadCompressor.attachChecksum(<String, dynamic>{
+          'pid': '199856201458',
+          'n': 'Nadeesha Perera',
+          'age': 26,
+          'ga': 32,
+          'sbp': 145,
+          'dbp': 95,
+          'bs': 6.6, // mmol/L -> harmonized to 118.8 mg/dL
+          'temp': 37.0, // °C -> harmonized to 98.6 °F
+          'hr': 84,
+          'hb': 11.4,
+          'epds': 14,
+          'ro': 1,
+        });
+
+        expect(
+          QrPayloadCompressor.buildChecksumInput(thesisPayload),
+          '199856201458|145|95|6.6|37|84|14|1',
+        );
+        expect(thesisPayload['chk'], isA<String>());
+        expect((thesisPayload['chk'] as String).length, 64);
+        expect(QrPayloadCompressor.verifyPayloadChecksum(thesisPayload), isTrue);
+
+        final compressed = QrPayloadCompressor.compressGzip(thesisPayload);
+        expect(compressed, startsWith('MVZ1:GZ:'));
+        final result = await service.processQrPayload(compressed);
+
+        expect(result.isSuccess, isTrue);
+        expect(result.checksumVerified, isTrue);
+        expect(result.epdsScore, 14);
+        expect(result.isClinicalReadOnly, isTrue);
+        expect(saved, isTrue);
+      },
+    );
+
+    test(
+      'Checklist verification: pipe-delimited chkInput (#1001|142|92|96|36.7|82|5|1), no .0 on doubles, MVZ1:GZ: & MVZ1:JSON: prefixes, and case-insensitive hex',
+      () {
+        // Simulate Dart parsing integer values as double (142.0, 92.0, 96.0, 82.0, 5.0, 1.0)
+        final Map<String, dynamic> payloadWithDoubles = <String, dynamic>{
+          'pid': '#1001',
+          'sbp': 142.0,
+          'dbp': 92.0,
+          'bs': 96.0,
+          'temp': 36.7,
+          'hr': 82.0,
+          'epds': 5.0,
+          'ro': 1.0,
+        };
+
+        // Must strip .0 from integer values and produce exact pipe-delimited string
+        final String chkInput =
+            QrPayloadCompressor.buildChecksumInput(payloadWithDoubles);
+        expect(chkInput, '#1001|142|92|96|36.7|82|5|1');
+
+        final String expectedLowerHex =
+            QrPayloadCompressor.computePayloadChecksum(payloadWithDoubles);
+        expect(expectedLowerHex.length, 64);
+        expect(expectedLowerHex, equals(expectedLowerHex.toLowerCase()));
+
+        // Verify case-insensitive comparison (.toLowerCase())
+        final Map<String, dynamic> upperCaseChkPayload = <String, dynamic>{
+          ...payloadWithDoubles,
+          'chk': expectedLowerHex.toUpperCase(),
+        };
+        expect(
+          QrPayloadCompressor.verifyPayloadChecksum(upperCaseChkPayload),
+          isTrue,
+        );
+
+        // Test MVZ1:GZ: prefix (URL-safe Base64 without '=' padding)
+        final String gzEncoded =
+            QrPayloadCompressor.compressGzip(upperCaseChkPayload);
+        expect(gzEncoded, startsWith('MVZ1:GZ:'));
+        expect(gzEncoded.contains('='), isFalse);
+        final Map<String, dynamic> gzDecoded =
+            QrPayloadCompressor.decompress(gzEncoded);
+        expect(QrPayloadCompressor.verifyPayloadChecksum(gzDecoded), isTrue);
+
+        // Test MVZ1:JSON: fallback prefix (URL-safe Base64 without '=' padding)
+        final String jsonEncoded =
+            QrPayloadCompressor.encodeJsonPrefix(upperCaseChkPayload);
+        expect(jsonEncoded, startsWith('MVZ1:JSON:'));
+        expect(jsonEncoded.contains('='), isFalse);
+        final Map<String, dynamic> jsonDecoded =
+            QrPayloadCompressor.decompress(jsonEncoded);
+        expect(QrPayloadCompressor.verifyPayloadChecksum(jsonDecoded), isTrue);
+      },
+    );
+
+    test(
+      'TC-11: Rejects tampered QR payload when SHA-256 chk does not match before DB insertion',
+      () async {
+        bool saved = false;
+        final service = MidwifeSyncService(
+          onSaveSyncData: ({
+            required BasicProfile profile,
+            required KeyVitals vitals,
+            MedicalHistory medicalHistory = const MedicalHistory.empty(),
+            required ObstetricHistory obstetricHistory,
+            required ClinicRecord clinicRecord,
+            required DeliveryPlan deliveryPlan,
+            String? clinicName,
+            String? midwifeName,
+            int version = 1,
+            String? payloadHash,
+            bool isClinicalReadOnly = true,
+          }) async {
+            saved = true;
+          },
+        );
+
+        final Map<String, dynamic> signedPayload =
+            QrPayloadCompressor.attachChecksum(<String, dynamic>{
+          'pid': '199856201458',
+          'n': 'Nadeesha Perera',
+          'age': 26,
+          'ga': 32,
+          'sbp': 120,
+          'dbp': 80,
+          'bs': 90.0,
+          'temp': 98.6,
+          'hr': 78,
+          'hb': 11.8,
+          'epds': 4,
+          'ro': 1,
+        });
+
+        // Tamper with systolic blood pressure after signing
+        final Map<String, dynamic> tamperedPayload =
+            Map<String, dynamic>.from(signedPayload)..['sbp'] = 180;
+
+        expect(
+          QrPayloadCompressor.verifyPayloadChecksum(tamperedPayload),
+          isFalse,
+        );
+
+        final result = await service.processQrPayload(
+          jsonEncode(tamperedPayload),
+        );
+
+        expect(result.isSuccess, isFalse);
+        expect(result.checksumVerified, isFalse);
+        expect(result.message, contains('Scan Failed: Corrupted QR Payload'));
+        expect(saved, isFalse);
+      },
+    );
+
+    test(
+      'generateSamplePayload uses Sri Lankan pid and Thesis Table 4.5 keys without Indian abha field',
+      () {
+        final rawSample = MidwifeSyncService.generateSamplePayload();
+        final decompressed = QrPayloadCompressor.decompress(rawSample);
+        expect(decompressed.containsKey('abha'), isFalse);
+        expect(decompressed['pid'], isNotNull);
+        expect(decompressed['age'], 26);
+        expect(decompressed['sbp'], 120);
+        expect(decompressed['dbp'], 80);
+        expect(decompressed['bs'], 82);
+        expect(decompressed['temp'], 98.4);
+        expect(decompressed['hr'], 78);
+        expect(decompressed['hb'], 11.8);
+        expect(decompressed['epds'], 4);
+        expect(decompressed['ro'], 1);
+        expect(decompressed['chk'], isA<String>());
+        expect((decompressed['chk'] as String).length, 64);
+        expect(QrPayloadCompressor.verifyPayloadChecksum(decompressed), isTrue);
+      },
+    );
   });
 
   group('UI Integration Tests', () {

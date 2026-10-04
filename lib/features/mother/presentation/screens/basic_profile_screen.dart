@@ -16,6 +16,8 @@ import '../../../../l10n/generated/app_localizations.dart';
 import '../../domain/basic_profile.dart';
 import '../../domain/education_level.dart';
 import '../../domain/key_vitals.dart';
+import '../../domain/read_only_immutability_guard.dart';
+import '../widgets/clinical_read_only_banner.dart';
 
 /// The mother's first tab: the four figures her record already holds, then the
 /// registration and household details the clinic collects at the first visit.
@@ -33,6 +35,7 @@ class BasicProfileScreen extends StatefulWidget {
     this.profile = const BasicProfile.empty(),
     this.vitals = const KeyVitals.empty(),
     this.onSubmit,
+    this.isReadOnly = false,
   });
 
   /// The profile details to display and edit.
@@ -45,6 +48,10 @@ class BasicProfileScreen extends StatefulWidget {
   /// saying storage is not connected rather than pretending to have saved.
   final ValueChanged<BasicProfile>? onSubmit;
 
+  /// True when the record was imported from an official MOH Midwife QR sync (`"ro": 1`).
+  /// Enforces 100% edit lockout via [ReadOnlyImmutabilityGuard].
+  final bool isReadOnly;
+
   @override
   State<BasicProfileScreen> createState() => _BasicProfileScreenState();
 }
@@ -56,6 +63,9 @@ class _BasicProfileScreenState extends State<BasicProfileScreen> {
   static const int _maxAge = 70;
 
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  ReadOnlyImmutabilityGuard get _immutabilityGuard =>
+      ReadOnlyImmutabilityGuard(isClinicalReadOnly: widget.isReadOnly);
 
   late final TextEditingController _registrationNumber;
   late final TextEditingController _motherName;
@@ -197,6 +207,7 @@ class _BasicProfileScreenState extends State<BasicProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
+    final bool isLocked = _immutabilityGuard.isLocked;
 
     return Form(
       key: _formKey,
@@ -215,28 +226,42 @@ class _BasicProfileScreenState extends State<BasicProfileScreen> {
               body: l10n.profileBody,
               align: TextAlign.start,
             ),
+            if (isLocked) ...<Widget>[
+              const SizedBox(height: AppSpacing.componentGap),
+              const ClinicalReadOnlyBanner(),
+            ],
             const SizedBox(height: AppSpacing.sectionGap),
             Text(l10n.vitalsEyebrow, style: AppTextStyles.labelCaps),
             const SizedBox(height: AppSpacing.stackMd),
             _vitalsGrid(l10n),
             const SizedBox(height: AppSpacing.sectionGap),
-            _demographics(l10n),
-            const SizedBox(height: AppSpacing.componentGap),
-            _personalInformation(l10n),
-            const SizedBox(height: AppSpacing.componentGap),
-            _administrativeDetails(l10n),
-            const SizedBox(height: AppSpacing.componentGap),
-            _emergencyContacts(l10n),
-            const SizedBox(height: AppSpacing.sectionGap),
-            Align(
-              alignment: Alignment.centerRight,
-              child: AppPrimaryButton(
-                label: l10n.actionSaveProfile,
-                onPressed: _save,
-                icon: Icons.check_rounded,
-                expand: false,
+            IgnorePointer(
+              ignoring: isLocked,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: <Widget>[
+                  _demographics(l10n),
+                  const SizedBox(height: AppSpacing.componentGap),
+                  _personalInformation(l10n),
+                  const SizedBox(height: AppSpacing.componentGap),
+                  _administrativeDetails(l10n),
+                  const SizedBox(height: AppSpacing.componentGap),
+                  _emergencyContacts(l10n),
+                ],
               ),
             ),
+            if (!isLocked) ...<Widget>[
+              const SizedBox(height: AppSpacing.sectionGap),
+              Align(
+                alignment: Alignment.centerRight,
+                child: AppPrimaryButton(
+                  label: l10n.actionSaveProfile,
+                  onPressed: _save,
+                  icon: Icons.check_rounded,
+                  expand: false,
+                ),
+              ),
+            ],
           ],
         ),
       ),
@@ -449,55 +474,58 @@ class _BasicProfileScreenState extends State<BasicProfileScreen> {
   }
 
   void _save() {
-    // Dismissing the keyboard first stops the error text appearing behind it on
-    // a field near the bottom of the form.
-    SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
+    _immutabilityGuard.guardMutation(() {
+      // Dismissing the keyboard first stops the error text appearing behind it on
+      // a field near the bottom of the form.
+      SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
 
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+      if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final BasicProfile profile = BasicProfile(
-      motherName: _motherName.text.trim(),
-      registrationNumber: _trimmedOrNull(_registrationNumber),
-      registrationDate: _registrationDate,
-      nationalId: _trimmedOrNull(_nationalId),
-      address: _trimmedOrNull(_address),
-      phoneNumber: _trimmedOrNull(_phone),
-      mother: ParentDetails(
-        age: int.tryParse(_motherAge.text.trim()),
-        education: _motherEducation,
-        occupation: _trimmedOrNull(_motherOccupation),
-      ),
-      father: ParentDetails(
-        age: int.tryParse(_fatherAge.text.trim()),
-        education: _fatherEducation,
-        occupation: _trimmedOrNull(_fatherOccupation),
-      ),
-      mohArea: _trimmedOrNull(_mohArea),
-      phmArea: _trimmedOrNull(_phmArea),
-      gramaNiladariDivision: _trimmedOrNull(_gramaNiladari),
-      clinicName: _trimmedOrNull(_clinicName),
-      otherClinics: _trimmedOrNull(_otherClinics),
-      eligibleFamilyRegisterNumber: _trimmedOrNull(_eligibleFamilyNumber),
-      eligibleFamilyRegisterDate: _eligibleFamilyDate,
-      emergencyContactPerson: _trimmedOrNull(_emergencyPerson),
-      emergencyContactPhone: _trimmedOrNull(_emergencyPhone),
-      emergencyContactAddress: _trimmedOrNull(_emergencyAddress),
-      mohOfficePhone: _trimmedOrNull(_mohPhone),
-      phmPhone: _trimmedOrNull(_phmPhone),
-    );
+      final BasicProfile profile = BasicProfile(
+        motherName: _motherName.text.trim(),
+        registrationNumber: _trimmedOrNull(_registrationNumber),
+        registrationDate: _registrationDate,
+        nationalId: _trimmedOrNull(_nationalId),
+        address: _trimmedOrNull(_address),
+        phoneNumber: _trimmedOrNull(_phone),
+        mother: ParentDetails(
+          age: int.tryParse(_motherAge.text.trim()),
+          education: _motherEducation,
+          occupation: _trimmedOrNull(_motherOccupation),
+        ),
+        father: ParentDetails(
+          age: int.tryParse(_fatherAge.text.trim()),
+          education: _fatherEducation,
+          occupation: _trimmedOrNull(_fatherOccupation),
+        ),
+        mohArea: _trimmedOrNull(_mohArea),
+        phmArea: _trimmedOrNull(_phmArea),
+        gramaNiladariDivision: _trimmedOrNull(_gramaNiladari),
+        clinicName: _trimmedOrNull(_clinicName),
+        otherClinics: _trimmedOrNull(_otherClinics),
+        eligibleFamilyRegisterNumber: _trimmedOrNull(_eligibleFamilyNumber),
+        eligibleFamilyRegisterDate: _eligibleFamilyDate,
+        emergencyContactPerson: _trimmedOrNull(_emergencyPerson),
+        emergencyContactPhone: _trimmedOrNull(_emergencyPhone),
+        emergencyContactAddress: _trimmedOrNull(_emergencyAddress),
+        mohOfficePhone: _trimmedOrNull(_mohPhone),
+        phmPhone: _trimmedOrNull(_phmPhone),
+      );
 
-    final ValueChanged<BasicProfile>? onSubmit = widget.onSubmit;
-    if (onSubmit != null) {
-      onSubmit(profile);
-      return;
-    }
+      final ValueChanged<BasicProfile>? onSubmit =
+          _immutabilityGuard.guardCallback(widget.onSubmit);
+      if (onSubmit != null) {
+        onSubmit(profile);
+        return;
+      }
 
-    // TODO: remove once a caller supplies onSubmit and owns the confirmation.
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(AppLocalizations.of(context).profileSaveNotConnected),
-      ),
-    );
+      // TODO: remove once a caller supplies onSubmit and owns the confirmation.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).profileSaveNotConnected),
+        ),
+      );
+    });
   }
 
   Widget _administrativeDetails(AppLocalizations l10n) {

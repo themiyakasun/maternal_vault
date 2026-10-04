@@ -10,6 +10,7 @@ import '../../domain/key_vitals.dart';
 import '../../domain/medical_history.dart';
 import '../../domain/mother_tab.dart';
 import '../../domain/obstetric_history.dart';
+import '../../domain/read_only_immutability_guard.dart';
 import '../widgets/language_sheet.dart';
 import '../widgets/pregnancy_record_app_bar.dart';
 import 'basic_profile_screen.dart';
@@ -50,6 +51,7 @@ class MotherShellScreen extends StatefulWidget {
     this.onOpenNotifications,
     this.enableDefaultNotifications = false,
     this.initialTab = MotherTab.profile,
+    this.isReadOnly = false,
   });
 
   /// Asks the app root to switch languages, the same contract the welcome flow
@@ -99,6 +101,10 @@ class MotherShellScreen extends StatefulWidget {
   /// land somewhere other than Profile later.
   final MotherTab initialTab;
 
+  /// True when the clinical record carries `"ro": 1` (`is_clinical_readonly = true`),
+  /// enforcing 100% edit lockout via [ReadOnlyImmutabilityGuard].
+  final bool isReadOnly;
+
   /// Replaces the setup screen: setup is finished and there is nothing behind
   /// this to go back to.
   static Route<void> route({
@@ -116,6 +122,7 @@ class MotherShellScreen extends StatefulWidget {
     ValueChanged<DeliveryPlan>? onSavePlan,
     VoidCallback? onOpenNotifications,
     bool enableDefaultNotifications = true,
+    bool isReadOnly = false,
   }) {
     return PageRouteBuilder<void>(
       transitionDuration: const Duration(milliseconds: 450),
@@ -135,6 +142,7 @@ class MotherShellScreen extends StatefulWidget {
         onSavePlan: onSavePlan,
         onOpenNotifications: onOpenNotifications,
         enableDefaultNotifications: enableDefaultNotifications,
+        isReadOnly: isReadOnly,
       ),
       transitionsBuilder:
           (BuildContext context, Animation<double> animation, _, Widget child) {
@@ -155,7 +163,11 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
   late ObstetricHistory _obstetric = widget.obstetric;
   late ClinicRecord _clinic = widget.clinic;
   late DeliveryPlan _plan = widget.plan;
+  late bool _isClinicalReadOnly = widget.isReadOnly;
   int _syncEpoch = 0;
+
+  ReadOnlyImmutabilityGuard get _immutabilityGuard =>
+      ReadOnlyImmutabilityGuard(isClinicalReadOnly: _isClinicalReadOnly);
 
   @override
   void initState() {
@@ -203,6 +215,9 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
     if (widget.obstetric != oldWidget.obstetric) _obstetric = widget.obstetric;
     if (widget.clinic != oldWidget.clinic) _clinic = widget.clinic;
     if (widget.plan != oldWidget.plan) _plan = widget.plan;
+    if (widget.isReadOnly != oldWidget.isReadOnly) {
+      _isClinicalReadOnly = widget.isReadOnly;
+    }
   }
 
   Future<void> _openQrScanner() async {
@@ -223,6 +238,7 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
         _obstetric = syncedData.obstetricHistory;
         _clinic = syncedData.clinicRecord;
         _plan = syncedData.deliveryPlan;
+        _isClinicalReadOnly = syncedData.isClinicalReadOnly;
       });
 
       widget.onSubmitProfile?.call(syncedData.profile);
@@ -238,6 +254,7 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
         history: _history,
         obstetric: _obstetric,
         clinic: _clinic,
+        epdsScore: result?.epdsScore,
       );
       return;
     }
@@ -253,6 +270,7 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
         }
         if (result.clinicRecord != null) _clinic = result.clinicRecord!;
         if (result.deliveryPlan != null) _plan = result.deliveryPlan!;
+        _isClinicalReadOnly = result.isClinicalReadOnly;
       });
 
       if (result.profile != null) widget.onSubmitProfile?.call(result.profile!);
@@ -276,19 +294,22 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
         history: _history,
         obstetric: _obstetric,
         clinic: _clinic,
+        epdsScore: result.epdsScore,
       );
     }
   }
 
   Future<void> _persistToDatabase() async {
+    if (_immutabilityGuard.isLocked) return;
     try {
-      await EncryptedDatabaseHelper.saveSyncData(
+      await EncryptedDatabaseHelper.saveLocalData(
         profile: _profile,
         vitals: _vitals,
         medicalHistory: _history,
         obstetricHistory: _obstetric,
         clinicRecord: _clinic,
         deliveryPlan: _plan,
+        isClinicalReadOnly: _isClinicalReadOnly,
       );
     } catch (e) {
       debugPrint('Error auto-persisting shell state: $e');
@@ -314,6 +335,7 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
               _obstetric = syncedData.obstetricHistory;
               _clinic = syncedData.clinicRecord;
               _plan = syncedData.deliveryPlan;
+              _isClinicalReadOnly = syncedData.isClinicalReadOnly;
             });
           }
         },
@@ -326,6 +348,7 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
             _obstetric = const ObstetricHistory.empty();
             _clinic = const ClinicRecord.empty();
             _plan = const DeliveryPlan.empty();
+            _isClinicalReadOnly = false;
           });
         },
       ),
@@ -398,52 +421,55 @@ class _MotherShellScreenState extends State<MotherShellScreen> {
           key: ValueKey('shell_profile_$_syncEpoch'),
           profile: _profile,
           vitals: _vitals,
-          onSubmit: (BasicProfile p) {
+          isReadOnly: _isClinicalReadOnly,
+          onSubmit: _immutabilityGuard.guardCallback((BasicProfile p) {
             setState(() => _profile = p);
             widget.onSubmitProfile?.call(p);
             _persistToDatabase();
-          },
+          }),
         );
       case MotherTab.history:
         return MedicalHistoryScreen(
           key: ValueKey('shell_history_$_syncEpoch'),
           history: _history,
-          onChanged: (MedicalHistory h) {
+          isReadOnly: _isClinicalReadOnly,
+          onChanged: _immutabilityGuard.guardCallback((MedicalHistory h) {
             setState(() => _history = h);
             widget.onChangeHistory?.call(h);
             _persistToDatabase();
-          },
+          }),
         );
       case MotherTab.obstetric:
         return ObstetricHistoryScreen(
           key: ValueKey('shell_obstetric_$_syncEpoch'),
           history: _obstetric,
-          onChanged: (ObstetricHistory o) {
+          onChanged: _immutabilityGuard.guardCallback((ObstetricHistory o) {
             setState(() => _obstetric = o);
             widget.onChangeObstetric?.call(o);
             _persistToDatabase();
-          },
+          }),
         );
       case MotherTab.clinic:
         return ClinicVisitsScreen(
           key: ValueKey('shell_clinic_$_syncEpoch'),
           record: _clinic,
           onScanQr: _openQrScanner,
-          onChanged: (ClinicRecord c) {
+          onChanged: _immutabilityGuard.guardCallback((ClinicRecord c) {
             setState(() => _clinic = c);
             widget.onChangeClinic?.call(c);
             _persistToDatabase();
-          },
+          }),
         );
       case MotherTab.plan:
         return PlanScreen(
           key: ValueKey('shell_plan_$_syncEpoch'),
           plan: _plan,
-          onSave: (DeliveryPlan pl) {
+          isReadOnly: _isClinicalReadOnly,
+          onSave: _immutabilityGuard.guardCallback((DeliveryPlan pl) {
             setState(() => _plan = pl);
             widget.onSavePlan?.call(pl);
             _persistToDatabase();
-          },
+          }),
         );
     }
   }

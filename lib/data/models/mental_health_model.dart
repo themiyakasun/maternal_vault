@@ -2,6 +2,10 @@ import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:tflite_flutter/tflite_flutter.dart';
 
+import '../../features/mother/domain/basic_profile.dart';
+import '../../features/mother/domain/medical_history.dart';
+import '../../features/mother/domain/obstetric_history.dart';
+import 'feature_vector_adapter.dart';
 import 'model_notification.dart';
 
 /// Clinical prediction output from the Perinatal Mental Health Model.
@@ -12,6 +16,7 @@ class MentalHealthRiskResult {
     required this.probabilities,
     required this.supportNotes,
     this.rawOutput = const <double>[],
+    this.inputVector = const <double>[],
   });
 
   final AlertSeverity severity;
@@ -19,6 +24,11 @@ class MentalHealthRiskResult {
   final Map<String, double> probabilities;
   final List<String> supportNotes;
   final List<double> rawOutput;
+
+  /// The 245-dimensional feature vector mapped from the 64 clinical/psychosocial survey features
+  /// (`StandardScaler` on 5 continuous features + `OneHotEncoder` on 59 categorical features,
+  /// excluding raw target leakage columns `epds_total_score` and `phq9_score`).
+  final List<double> inputVector;
 
   bool get isElevated => severity.isElevated;
 
@@ -54,6 +64,7 @@ class MentalHealthRiskResult {
         'score': score,
         'probabilities': probabilities,
         'notes': supportNotes,
+        'inputVectorDim': inputVector.length,
       },
     );
   }
@@ -61,7 +72,9 @@ class MentalHealthRiskResult {
 
 /// Quantized INT8 model wrapper for Perinatal Mental Health Assessment.
 ///
-/// Features evaluated: 245 input features (survey indicators, emotional wellbeing scale).
+/// Maps 64 clinical/psychosocial features (5 continuous + 59 categorical) via
+/// [OnDeviceFeatureVectorAdapter] (`feature_metadata.json` + `imputer.pkl`) into the
+/// 245-element input tensor, strictly dropping raw target leakage columns.
 class MentalHealthModel {
   static const String modelAssetPath = 'assets/models/mental_health_int8.tflite';
   static const String modelFilePath = 'lib/data/models/mental_health_int8.tflite';
@@ -97,9 +110,27 @@ class MentalHealthModel {
     int anxietyScore = 0,
     bool sleepDisturbance = false,
     bool reportedFatigue = false,
+    List<int>? itemResponses,
+    BasicProfile? profile,
+    MedicalHistory? medicalHistory,
+    ObstetricHistory? obstetric,
     List<double>? rawFeatures,
   }) async {
     await loadModel();
+
+    final List<double> inputVector =
+        rawFeatures != null && rawFeatures.length == 245
+            ? rawFeatures
+            : await OnDeviceFeatureVectorAdapter.buildMentalHealthFeatureVector(
+                epdsScore: epdsScore,
+                anxietyScore: anxietyScore,
+                sleepDisturbance: sleepDisturbance,
+                reportedFatigue: reportedFatigue,
+                itemResponses: itemResponses,
+                profile: profile,
+                medicalHistory: medicalHistory,
+                obstetric: obstetric,
+              );
 
     final notes = <String>[];
     if (epdsScore >= 13) {
@@ -116,17 +147,6 @@ class MentalHealthModel {
 
     if (_interpreter != null) {
       try {
-        final List<double> inputVector = rawFeatures != null && rawFeatures.length == 245
-            ? rawFeatures
-            : List<double>.filled(245, 0.0);
-
-        if (rawFeatures == null) {
-          inputVector[0] = epdsScore / 30.0;
-          inputVector[1] = anxietyScore / 10.0;
-          inputVector[2] = sleepDisturbance ? 1.0 : 0.0;
-          inputVector[3] = reportedFatigue ? 1.0 : 0.0;
-        }
-
         final input = [inputVector];
         final output = [
           [0.0, 0.0, 0.0]
@@ -159,6 +179,7 @@ class MentalHealthModel {
           },
           supportNotes: notes,
           rawOutput: raw,
+          inputVector: inputVector,
         );
       } catch (e) {
         debugPrint('MentalHealthModel inference error: $e');
@@ -193,6 +214,7 @@ class MentalHealthModel {
       },
       supportNotes: notes,
       rawOutput: [lowProb, midProb, highProb],
+      inputVector: inputVector,
     );
   }
 

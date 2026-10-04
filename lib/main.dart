@@ -209,17 +209,12 @@ class _MaternalVaultAppState extends State<MaternalVaultApp> {
     final List<String> tables =
         await EncryptedDatabaseHelper.getCreatedTables();
     debugPrint('📋 Created tables: $tables');
-    // Ensure clean state: if no midwife QR sync has been performed, wipe all tables
-    final bool hasSynced =
-        await EncryptedDatabaseHelper.hasCompletedMidwifeSync();
-    if (!hasSynced) {
-      await EncryptedDatabaseHelper.clearAllData();
-    }
 
     final records = await EncryptedDatabaseHelper.getMotherProfiles();
     debugPrint('👤 Records in mother_profile (${records.length}): $records');
 
-    // If synced records exist in the encrypted vault, load and display them!
+    // Offline-first persistence: load any saved records (whether entered locally
+    // by the mother before her first clinic visit or synced from a Midwife QR code).
     final syncedData = await EncryptedDatabaseHelper.loadSyncedData();
 
     _navigator.pushReplacement(
@@ -232,6 +227,7 @@ class _MaternalVaultAppState extends State<MaternalVaultApp> {
             syncedData?.obstetricHistory ?? const ObstetricHistory.empty(),
         clinic: syncedData?.clinicRecord ?? const ClinicRecord.empty(),
         plan: syncedData?.deliveryPlan ?? const DeliveryPlan.empty(),
+        isReadOnly: syncedData?.isClinicalReadOnly ?? false,
       ),
     );
   }

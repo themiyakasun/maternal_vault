@@ -74,6 +74,10 @@ class EncryptedDatabaseHelper {
     if (!colNames.contains('updated_at')) {
       await db.execute('ALTER TABLE mother_profile ADD COLUMN updated_at TEXT;');
     }
+    if (!colNames.contains('is_clinical_readonly')) {
+      await db.execute(
+          'ALTER TABLE mother_profile ADD COLUMN is_clinical_readonly INTEGER DEFAULT 1;');
+    }
 
     await db.execute('''
       CREATE TABLE IF NOT EXISTS clinic_visits (
@@ -130,9 +134,17 @@ class EncryptedDatabaseHelper {
         clinic_name TEXT,
         midwife_name TEXT,
         record_version INTEGER,
-        payload_hash TEXT
+        payload_hash TEXT,
+        is_clinical_readonly INTEGER DEFAULT 1
       );
     ''');
+
+    final syncCols = await db.rawQuery('PRAGMA table_info(sync_audit_log);');
+    final syncColNames = syncCols.map((c) => c['name'] as String).toSet();
+    if (!syncColNames.contains('is_clinical_readonly')) {
+      await db.execute(
+          'ALTER TABLE sync_audit_log ADD COLUMN is_clinical_readonly INTEGER DEFAULT 1;');
+    }
 
     await db.execute('''
       CREATE TABLE IF NOT EXISTS model_notifications (
@@ -176,6 +188,7 @@ class EncryptedDatabaseHelper {
     String? midwifeName,
     int version = 1,
     String? payloadHash,
+    bool isClinicalReadOnly = true,
   }) async {
     final db = await database;
     final now = DateTime.now().toIso8601String();
@@ -194,6 +207,7 @@ class EncryptedDatabaseHelper {
           'gestational_weeks': gestationalWeeks,
           'profile_json': jsonEncode(profile.toJson()),
           'vitals_json': jsonEncode(vitals.toJson()),
+          'is_clinical_readonly': isClinicalReadOnly ? 1 : 0,
           'updated_at': now,
           'created_at': now,
         },
@@ -278,14 +292,96 @@ class EncryptedDatabaseHelper {
           'midwife_name': midwifeName ?? 'Midwife In-charge',
           'record_version': version,
           'payload_hash': payloadHash ?? '',
+          'is_clinical_readonly': isClinicalReadOnly ? 1 : 0,
         },
         conflictAlgorithm: ConflictAlgorithm.replace,
       );
     });
   }
 
-  /// Loads the full maternal vault dataset saved in the encrypted database.
-  /// Returns null if no real midwife dashboard sync has occurred yet.
+  /// Persists locally entered mother records (Profile, Medical History,
+  /// Obstetric History, Antenatal Care, and Delivery Plan) in SQLCipher
+  /// across app restarts before the first Midwife QR sync occurs.
+  static Future<void> saveLocalData({
+    required BasicProfile profile,
+    required KeyVitals vitals,
+    MedicalHistory medicalHistory = const MedicalHistory.empty(),
+    required ObstetricHistory obstetricHistory,
+    required ClinicRecord clinicRecord,
+    required DeliveryPlan deliveryPlan,
+    bool isClinicalReadOnly = false,
+  }) async {
+    final db = await database;
+    final now = DateTime.now().toIso8601String();
+
+    await db.transaction((txn) async {
+      final gestationalWeeks = clinicRecord.visits.isNotEmpty
+          ? clinicRecord.visits.first.week
+          : (obstetricHistory.poaAtRegistrationWeeks ?? 0);
+      await txn.insert(
+        'mother_profile',
+        <String, dynamic>{
+          'id': 'active_profile',
+          'mother_name': profile.motherName,
+          'age': profile.mother.age,
+          'gestational_weeks': gestationalWeeks,
+          'profile_json': jsonEncode(profile.toJson()),
+          'vitals_json': jsonEncode(vitals.toJson()),
+          'is_clinical_readonly': isClinicalReadOnly ? 1 : 0,
+          'updated_at': now,
+          'created_at': now,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      await txn.insert(
+        'medical_history',
+        <String, dynamic>{
+          'id': 'active_medical_history',
+          'history_json': jsonEncode(medicalHistory.toJson()),
+          'updated_at': now,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      await txn.insert(
+        'obstetric_history',
+        <String, dynamic>{
+          'id': 'active_history',
+          'gravida': obstetricHistory.gravidity,
+          'para': obstetricHistory.parity,
+          'history_json': jsonEncode(obstetricHistory.toJson()),
+          'updated_at': now,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      await txn.insert(
+        'antenatal_care',
+        <String, dynamic>{
+          'id': 'active_care',
+          'care_json': jsonEncode(clinicRecord.toJson()),
+          'updated_at': now,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+
+      await txn.insert(
+        'delivery_plan',
+        <String, dynamic>{
+          'id': 'active_delivery_plan',
+          'plan_json': jsonEncode(deliveryPlan.toJson()),
+          'updated_at': now,
+        },
+        conflictAlgorithm: ConflictAlgorithm.replace,
+      );
+    });
+  }
+
+  /// Loads the full maternal vault dataset saved in the encrypted SQLCipher database,
+  /// whether entered locally by the mother before her first clinic visit or
+  /// synchronized from an official Midwife QR code.
+  /// Returns null only if neither local data nor midwife sync data has been saved yet.
   static Future<
       ({
         BasicProfile profile,
@@ -294,19 +390,55 @@ class EncryptedDatabaseHelper {
         ObstetricHistory obstetricHistory,
         ClinicRecord clinicRecord,
         DeliveryPlan deliveryPlan,
+        bool isClinicalReadOnly,
       })?> loadSyncedData() async {
     final db = await database;
 
-    // Only load if a real midwife sync was completed and logged
-    final syncLog = await db.query('sync_audit_log', limit: 1);
-    if (syncLog.isEmpty) return null;
+    final syncLog = await db.query(
+      'sync_audit_log',
+      orderBy: 'sync_timestamp DESC',
+      limit: 1,
+    );
 
-    final profileRows = await db.query('mother_profile', limit: 1);
-    if (profileRows.isEmpty) return null;
+    // Prefer the 'active_profile' row, or any row with non-empty profile_json
+    final activeProfileRows = await db.query(
+      'mother_profile',
+      where: 'id = ? OR profile_json IS NOT NULL',
+      whereArgs: <Object?>['active_profile'],
+      orderBy: "CASE WHEN id = 'active_profile' THEN 0 ELSE 1 END",
+      limit: 1,
+    );
 
-    final profileRow = profileRows.first;
-    final profileJsonStr = profileRow['profile_json'] as String?;
-    final vitalsJsonStr = profileRow['vitals_json'] as String?;
+    final medRows = await db.query('medical_history', limit: 1);
+    final historyRows = await db.query('obstetric_history', limit: 1);
+    final careRows = await db.query('antenatal_care', limit: 1);
+    final planRows = await db.query('delivery_plan', limit: 1);
+
+    final bool hasAnySavedRecord = syncLog.isNotEmpty ||
+        activeProfileRows.isNotEmpty ||
+        medRows.isNotEmpty ||
+        historyRows.isNotEmpty ||
+        careRows.isNotEmpty ||
+        planRows.isNotEmpty;
+
+    if (!hasAnySavedRecord) return null;
+
+    final Map<String, Object?>? profileRow =
+        activeProfileRows.isNotEmpty ? activeProfileRows.first : null;
+    final profileJsonStr = profileRow?['profile_json'] as String?;
+    final vitalsJsonStr = profileRow?['vitals_json'] as String?;
+
+    final bool isClinicalReadOnly;
+    if (syncLog.isNotEmpty) {
+      final dynamic rawRo = syncLog.first['is_clinical_readonly'] ??
+          profileRow?['is_clinical_readonly'];
+      isClinicalReadOnly =
+          rawRo == null ? true : (rawRo == 1 || rawRo == true || rawRo == '1');
+    } else {
+      final dynamic rawRo = profileRow?['is_clinical_readonly'];
+      isClinicalReadOnly =
+          rawRo == 1 || rawRo == true || rawRo == '1';
+    }
 
     final profile = profileJsonStr != null && profileJsonStr.isNotEmpty
         ? BasicProfile.fromJson(
@@ -318,7 +450,6 @@ class EncryptedDatabaseHelper {
         : const KeyVitals.empty();
 
     // Medical History
-    final medRows = await db.query('medical_history', limit: 1);
     final medicalHistory = medRows.isNotEmpty &&
             medRows.first['history_json'] != null
         ? MedicalHistory.fromJson(
@@ -327,7 +458,6 @@ class EncryptedDatabaseHelper {
         : const MedicalHistory.empty();
 
     // Obstetric History
-    final historyRows = await db.query('obstetric_history', limit: 1);
     final history = historyRows.isNotEmpty &&
             historyRows.first['history_json'] != null
         ? ObstetricHistory.fromJson(
@@ -336,7 +466,6 @@ class EncryptedDatabaseHelper {
         : const ObstetricHistory.empty();
 
     // Antenatal Care & Records
-    final careRows = await db.query('antenatal_care', limit: 1);
     ClinicRecord clinicRecord;
     if (careRows.isNotEmpty && careRows.first['care_json'] != null) {
       clinicRecord = ClinicRecord.fromJson(
@@ -358,7 +487,6 @@ class EncryptedDatabaseHelper {
     }
 
     // Delivery Plan
-    final planRows = await db.query('delivery_plan', limit: 1);
     final deliveryPlan =
         planRows.isNotEmpty && planRows.first['plan_json'] != null
             ? DeliveryPlan.fromJson(
@@ -373,6 +501,7 @@ class EncryptedDatabaseHelper {
       obstetricHistory: history,
       clinicRecord: clinicRecord,
       deliveryPlan: deliveryPlan,
+      isClinicalReadOnly: isClinicalReadOnly,
     );
   }
 
@@ -403,6 +532,12 @@ class EncryptedDatabaseHelper {
   /// Checks whether any synced mother records exist in the encrypted store.
   static Future<bool> hasSyncedRecords() async {
     return await hasCompletedMidwifeSync();
+  }
+
+  /// Checks whether any local mother-entered or midwife-synced records exist in SQLCipher.
+  static Future<bool> hasSavedVaultData() async {
+    final loaded = await loadSyncedData();
+    return loaded != null;
   }
 
   /// Returns the most recent sync audit entry, or null if no sync has occurred.

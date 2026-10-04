@@ -8,6 +8,8 @@ import '../../../../core/widgets/inputs/app_switch_tile.dart';
 import '../../../../core/widgets/inputs/app_text_field.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../domain/medical_history.dart';
+import '../../domain/read_only_immutability_guard.dart';
+import '../widgets/clinical_read_only_banner.dart';
 
 /// The mother's second tab: what runs in her family, and what she has been
 /// treated for herself.
@@ -16,6 +18,7 @@ class MedicalHistoryScreen extends StatefulWidget {
     super.key,
     this.history = const MedicalHistory.empty(),
     this.onChanged,
+    this.isReadOnly = false,
   });
 
   /// What the rows start on. Defaults to nothing reported.
@@ -25,6 +28,10 @@ class MedicalHistoryScreen extends StatefulWidget {
   /// but going nowhere, which is the state until the record layer lands.
   final ValueChanged<MedicalHistory>? onChanged;
 
+  /// True when the record was imported from an official MOH Midwife QR sync (`"ro": 1`).
+  /// Enforces 100% edit lockout via [ReadOnlyImmutabilityGuard].
+  final bool isReadOnly;
+
   @override
   State<MedicalHistoryScreen> createState() => _MedicalHistoryScreenState();
 }
@@ -33,6 +40,9 @@ class _MedicalHistoryScreenState extends State<MedicalHistoryScreen> {
   late MedicalHistory _history = widget.history;
   late final TextEditingController _familyOtherController;
   late final TextEditingController _personalOtherController;
+
+  ReadOnlyImmutabilityGuard get _immutabilityGuard =>
+      ReadOnlyImmutabilityGuard(isClinicalReadOnly: widget.isReadOnly);
 
   @override
   void initState() {
@@ -75,6 +85,7 @@ class _MedicalHistoryScreenState extends State<MedicalHistoryScreen> {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
+    final bool isLocked = _immutabilityGuard.isLocked;
 
     return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(
@@ -86,9 +97,21 @@ class _MedicalHistoryScreenState extends State<MedicalHistoryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: <Widget>[
-          _familyHistory(l10n),
-          const SizedBox(height: AppSpacing.componentGap),
-          _personalHistory(l10n),
+          if (isLocked) ...<Widget>[
+            const ClinicalReadOnlyBanner(),
+            const SizedBox(height: AppSpacing.componentGap),
+          ],
+          IgnorePointer(
+            ignoring: isLocked,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: <Widget>[
+                _familyHistory(l10n),
+                const SizedBox(height: AppSpacing.componentGap),
+                _personalHistory(l10n),
+              ],
+            ),
+          ),
         ],
       ),
     );
@@ -166,8 +189,10 @@ class _MedicalHistoryScreenState extends State<MedicalHistoryScreen> {
   }
 
   void _update(MedicalHistory next) {
-    setState(() => _history = next);
-    widget.onChanged?.call(next);
+    _immutabilityGuard.guardMutation(() {
+      setState(() => _history = next);
+      _immutabilityGuard.guardCallback(widget.onChanged)?.call(next);
+    });
   }
 
   String _familyLabel(AppLocalizations l10n, FamilyCondition condition) {

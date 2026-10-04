@@ -1,4 +1,5 @@
 export 'clinical_model_evaluator.dart';
+export 'feature_vector_adapter.dart';
 export 'maternal_risk_model.dart';
 export 'mental_health_model.dart';
 export 'model_notification.dart';

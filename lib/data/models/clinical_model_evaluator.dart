@@ -53,6 +53,7 @@ class ClinicalModelEvaluator {
     int anxietyScore = 0,
     bool sleepDisturbed = false,
     bool reportedFatigue = false,
+    List<int>? itemResponses,
   }) async {
     // 1. Maternal Health Risk (XGBoost)
     ClinicVisit? latestVisit;
@@ -67,20 +68,25 @@ class ClinicalModelEvaluator {
       hasDiabetes: history?.hasPersonal(PersonalCondition.diabetes) == true,
     );
 
-    // 2. Preterm Birth Risk
+    // 2. Preterm Birth Risk (37-dim SINASC feature vector)
     final pretermRes = await pretermRiskModel.evaluate(
       profile: profile,
       vitals: vitals,
       obstetric: obstetric,
       clinic: clinic,
+      medicalHistory: history,
     );
 
-    // 3. Mental Health Wellbeing
+    // 3. Mental Health Wellbeing (245-dim clinical/psychosocial feature vector)
     final mentalRes = await mentalHealthModel.evaluate(
       epdsScore: epdsScore,
       anxietyScore: anxietyScore,
       sleepDisturbance: sleepDisturbed,
       reportedFatigue: reportedFatigue,
+      itemResponses: itemResponses,
+      profile: profile,
+      medicalHistory: history,
+      obstetric: obstetric,
     );
 
     // Collect all generated notifications

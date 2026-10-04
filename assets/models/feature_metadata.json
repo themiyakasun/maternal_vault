@@ -1,0 +1,1250 @@
+{
+  "schema_version": "1.0.0",
+  "preterm_model": {
+    "model_asset": "assets/models/preterm_model_int8.tflite",
+    "vector_dim": 37,
+    "raw_feature_count": 13,
+    "dropped_leakage_columns": [
+      "gestational_age_weeks",
+      "birth_weight_grams"
+    ],
+    "numeric_features": [
+      {
+        "name": "maternal_age",
+        "index": 0,
+        "mean": 26.42,
+        "scale": 6.38,
+        "median": 26.0
+      },
+      {
+        "name": "previous_c_sections",
+        "index": 1,
+        "mean": 0.34,
+        "scale": 0.65,
+        "median": 0.0
+      },
+      {
+        "name": "previous_vaginal_births",
+        "index": 2,
+        "mean": 0.68,
+        "scale": 1.04,
+        "median": 0.0
+      },
+      {
+        "name": "previous_miscarriages",
+        "index": 3,
+        "mean": 0.19,
+        "scale": 0.51,
+        "median": 0.0
+      }
+    ],
+    "categorical_features": [
+      {
+        "name": "smoking",
+        "categories": [
+          "no",
+          "yes",
+          "unknown"
+        ],
+        "one_hot_indices": {
+          "no": 4,
+          "yes": 5,
+          "unknown": 6
+        },
+        "mode": "no",
+        "default_index": 4
+      },
+      {
+        "name": "educational_level",
+        "categories": [
+          "none",
+          "primary",
+          "secondary",
+          "higher",
+          "unknown"
+        ],
+        "one_hot_indices": {
+          "none": 7,
+          "primary": 8,
+          "secondary": 9,
+          "higher": 10,
+          "unknown": 11
+        },
+        "mode": "secondary",
+        "default_index": 9
+      },
+      {
+        "name": "multiple_pregnancy",
+        "categories": [
+          "singleton",
+          "twins",
+          "triplets_or_more"
+        ],
+        "one_hot_indices": {
+          "singleton": 12,
+          "twins": 13,
+          "triplets_or_more": 14
+        },
+        "mode": "singleton",
+        "default_index": 12
+      },
+      {
+        "name": "race_ethnicity",
+        "categories": [
+          "white",
+          "black",
+          "asian",
+          "mixed_parda",
+          "indigenous",
+          "unknown"
+        ],
+        "one_hot_indices": {
+          "white": 15,
+          "black": 16,
+          "asian": 17,
+          "mixed_parda": 18,
+          "indigenous": 19,
+          "unknown": 20
+        },
+        "mode": "asian",
+        "default_index": 17
+      },
+      {
+        "name": "drug_use",
+        "categories": [
+          "no",
+          "yes",
+          "unknown"
+        ],
+        "one_hot_indices": {
+          "no": 21,
+          "yes": 22,
+          "unknown": 23
+        },
+        "mode": "no",
+        "default_index": 21
+      },
+      {
+        "name": "marital_status",
+        "categories": [
+          "single",
+          "married",
+          "widowed",
+          "divorced",
+          "consensual_union"
+        ],
+        "one_hot_indices": {
+          "single": 24,
+          "married": 25,
+          "widowed": 26,
+          "divorced": 27,
+          "consensual_union": 28
+        },
+        "mode": "married",
+        "default_index": 25
+      },
+      {
+        "name": "alcohol_use",
+        "categories": [
+          "no",
+          "yes",
+          "unknown"
+        ],
+        "one_hot_indices": {
+          "no": 29,
+          "yes": 30,
+          "unknown": 31
+        },
+        "mode": "no",
+        "default_index": 29
+      },
+      {
+        "name": "has_diabetes",
+        "categories": [
+          "no",
+          "yes",
+          "gestational"
+        ],
+        "one_hot_indices": {
+          "no": 32,
+          "yes": 33,
+          "gestational": 34
+        },
+        "mode": "no",
+        "default_index": 32
+      },
+      {
+        "name": "has_arterial_hypertension",
+        "categories": [
+          "no",
+          "yes"
+        ],
+        "one_hot_indices": {
+          "no": 35,
+          "yes": 36
+        },
+        "mode": "no",
+        "default_index": 35
+      }
+    ]
+  },
+  "mental_health_model": {
+    "model_asset": "assets/models/mental_health_int8.tflite",
+    "vector_dim": 245,
+    "raw_feature_count": 64,
+    "dropped_leakage_columns": [
+      "epds_total_score",
+      "phq9_score"
+    ],
+    "numeric_features": [
+      {
+        "name": "maternal_age",
+        "index": 0,
+        "mean": 27.15,
+        "scale": 5.42,
+        "median": 27.0
+      },
+      {
+        "name": "socio_economic_status_ordinal",
+        "index": 1,
+        "mean": 2.05,
+        "scale": 1.12,
+        "median": 2.0
+      },
+      {
+        "name": "anxiety_subscale_score",
+        "index": 2,
+        "mean": 3.1,
+        "scale": 2.45,
+        "median": 3.0
+      },
+      {
+        "name": "anhedonia_subscale_score",
+        "index": 3,
+        "mean": 1.45,
+        "scale": 1.62,
+        "median": 1.0
+      },
+      {
+        "name": "somatic_sleep_cry_subscale_score",
+        "index": 4,
+        "mean": 2.2,
+        "scale": 2.15,
+        "median": 2.0
+      }
+    ],
+    "categorical_features": [
+      {
+        "name": "epds_item_1",
+        "categories": [
+          "0",
+          "1",
+          "2",
+          "3"
+        ],
+        "one_hot_indices": {
+          "0": 5,
+          "1": 6,
+          "2": 7,
+          "3": 8
+        },
+        "mode": "0",
+        "default_index": 5
+      },
+      {
+        "name": "epds_item_2",
+        "categories": [
+          "0",
+          "1",
+          "2",
+          "3"
+        ],
+        "one_hot_indices": {
+          "0": 9,
+          "1": 10,
+          "2": 11,
+          "3": 12
+        },
+        "mode": "0",
+        "default_index": 9
+      },
+      {
+        "name": "epds_item_3",
+        "categories": [
+          "0",
+          "1",
+          "2",
+          "3"
+        ],
+        "one_hot_indices": {
+          "0": 13,
+          "1": 14,
+          "2": 15,
+          "3": 16
+        },
+        "mode": "0",
+        "default_index": 13
+      },
+      {
+        "name": "epds_item_4",
+        "categories": [
+          "0",
+          "1",
+          "2",
+          "3"
+        ],
+        "one_hot_indices": {
+          "0": 17,
+          "1": 18,
+          "2": 19,
+          "3": 20
+        },
+        "mode": "0",
+        "default_index": 17
+      },
+      {
+        "name": "epds_item_5",
+        "categories": [
+          "0",
+          "1",
+          "2",
+          "3"
+        ],
+        "one_hot_indices": {
+          "0": 21,
+          "1": 22,
+          "2": 23,
+          "3": 24
+        },
+        "mode": "0",
+        "default_index": 21
+      },
+      {
+        "name": "epds_item_6",
+        "categories": [
+          "0",
+          "1",
+          "2",
+          "3"
+        ],
+        "one_hot_indices": {
+          "0": 25,
+          "1": 26,
+          "2": 27,
+          "3": 28
+        },
+        "mode": "0",
+        "default_index": 25
+      },
+      {
+        "name": "epds_item_7",
+        "categories": [
+          "0",
+          "1",
+          "2",
+          "3"
+        ],
+        "one_hot_indices": {
+          "0": 29,
+          "1": 30,
+          "2": 31,
+          "3": 32
+        },
+        "mode": "0",
+        "default_index": 29
+      },
+      {
+        "name": "epds_item_8",
+        "categories": [
+          "0",
+          "1",
+          "2",
+          "3"
+        ],
+        "one_hot_indices": {
+          "0": 33,
+          "1": 34,
+          "2": 35,
+          "3": 36
+        },
+        "mode": "0",
+        "default_index": 33
+      },
+      {
+        "name": "epds_item_9",
+        "categories": [
+          "0",
+          "1",
+          "2",
+          "3"
+        ],
+        "one_hot_indices": {
+          "0": 37,
+          "1": 38,
+          "2": 39,
+          "3": 40
+        },
+        "mode": "0",
+        "default_index": 37
+      },
+      {
+        "name": "epds_item_10",
+        "categories": [
+          "0",
+          "1",
+          "2",
+          "3"
+        ],
+        "one_hot_indices": {
+          "0": 41,
+          "1": 42,
+          "2": 43,
+          "3": 44
+        },
+        "mode": "0",
+        "default_index": 41
+      },
+      {
+        "name": "sleep_disturbance",
+        "categories": [
+          "no",
+          "mild",
+          "moderate",
+          "severe"
+        ],
+        "one_hot_indices": {
+          "no": 45,
+          "mild": 46,
+          "moderate": 47,
+          "severe": 48
+        },
+        "mode": "no",
+        "default_index": 45
+      },
+      {
+        "name": "reported_fatigue",
+        "categories": [
+          "no",
+          "mild",
+          "moderate",
+          "severe"
+        ],
+        "one_hot_indices": {
+          "no": 49,
+          "mild": 50,
+          "moderate": 51,
+          "severe": 52
+        },
+        "mode": "no",
+        "default_index": 49
+      },
+      {
+        "name": "partner_support",
+        "categories": [
+          "high",
+          "moderate",
+          "low",
+          "none"
+        ],
+        "one_hot_indices": {
+          "high": 53,
+          "moderate": 54,
+          "low": 55,
+          "none": 56
+        },
+        "mode": "high",
+        "default_index": 53
+      },
+      {
+        "name": "family_support",
+        "categories": [
+          "high",
+          "moderate",
+          "low",
+          "none"
+        ],
+        "one_hot_indices": {
+          "high": 57,
+          "moderate": 58,
+          "low": 59,
+          "none": 60
+        },
+        "mode": "high",
+        "default_index": 57
+      },
+      {
+        "name": "pregnancy_planned",
+        "categories": [
+          "yes",
+          "unplanned_accepted",
+          "unplanned_distressed",
+          "unknown"
+        ],
+        "one_hot_indices": {
+          "yes": 61,
+          "unplanned_accepted": 62,
+          "unplanned_distressed": 63,
+          "unknown": 64
+        },
+        "mode": "yes",
+        "default_index": 61
+      },
+      {
+        "name": "financial_stress",
+        "categories": [
+          "none",
+          "mild",
+          "moderate",
+          "severe"
+        ],
+        "one_hot_indices": {
+          "none": 65,
+          "mild": 66,
+          "moderate": 67,
+          "severe": 68
+        },
+        "mode": "none",
+        "default_index": 65
+      },
+      {
+        "name": "domestic_harmony",
+        "categories": [
+          "stable",
+          "occasional_tension",
+          "conflict",
+          "unsafe"
+        ],
+        "one_hot_indices": {
+          "stable": 69,
+          "occasional_tension": 70,
+          "conflict": 71,
+          "unsafe": 72
+        },
+        "mode": "stable",
+        "default_index": 69
+      },
+      {
+        "name": "delivery_fear",
+        "categories": [
+          "low",
+          "moderate",
+          "high",
+          "tokophobia"
+        ],
+        "one_hot_indices": {
+          "low": 73,
+          "moderate": 74,
+          "high": 75,
+          "tokophobia": 76
+        },
+        "mode": "low",
+        "default_index": 73
+      },
+      {
+        "name": "breastfeeding_confidence",
+        "categories": [
+          "confident",
+          "somewhat",
+          "anxious",
+          "unsure"
+        ],
+        "one_hot_indices": {
+          "confident": 77,
+          "somewhat": 78,
+          "anxious": 79,
+          "unsure": 80
+        },
+        "mode": "confident",
+        "default_index": 77
+      },
+      {
+        "name": "prior_depression_history",
+        "categories": [
+          "no",
+          "subclinical",
+          "clinical",
+          "postpartum"
+        ],
+        "one_hot_indices": {
+          "no": 81,
+          "subclinical": 82,
+          "clinical": 83,
+          "postpartum": 84
+        },
+        "mode": "no",
+        "default_index": 81
+      },
+      {
+        "name": "family_psychiatric_history",
+        "categories": [
+          "no",
+          "extended",
+          "first_degree",
+          "unknown"
+        ],
+        "one_hot_indices": {
+          "no": 85,
+          "extended": 86,
+          "first_degree": 87,
+          "unknown": 88
+        },
+        "mode": "no",
+        "default_index": 85
+      },
+      {
+        "name": "chronic_illness",
+        "categories": [
+          "no",
+          "controlled",
+          "uncontrolled",
+          "multiple"
+        ],
+        "one_hot_indices": {
+          "no": 89,
+          "controlled": 90,
+          "uncontrolled": 91,
+          "multiple": 92
+        },
+        "mode": "no",
+        "default_index": 89
+      },
+      {
+        "name": "obstetric_complications",
+        "categories": [
+          "none",
+          "mild",
+          "moderate",
+          "high_risk"
+        ],
+        "one_hot_indices": {
+          "none": 93,
+          "mild": 94,
+          "moderate": 95,
+          "high_risk": 96
+        },
+        "mode": "none",
+        "default_index": 93
+      },
+      {
+        "name": "social_isolation",
+        "categories": [
+          "connected",
+          "occasional",
+          "frequent",
+          "severe"
+        ],
+        "one_hot_indices": {
+          "connected": 97,
+          "occasional": 98,
+          "frequent": 99,
+          "severe": 100
+        },
+        "mode": "connected",
+        "default_index": 97
+      },
+      {
+        "name": "work_life_stress",
+        "categories": [
+          "low",
+          "moderate",
+          "high",
+          "unemployed_stressed"
+        ],
+        "one_hot_indices": {
+          "low": 101,
+          "moderate": 102,
+          "high": 103,
+          "unemployed_stressed": 104
+        },
+        "mode": "low",
+        "default_index": 101
+      },
+      {
+        "name": "childcare_assistance",
+        "categories": [
+          "adequate",
+          "partial",
+          "minimal",
+          "none"
+        ],
+        "one_hot_indices": {
+          "adequate": 105,
+          "partial": 106,
+          "minimal": 107,
+          "none": 108
+        },
+        "mode": "adequate",
+        "default_index": 105
+      },
+      {
+        "name": "antenatal_class_attendance",
+        "categories": [
+          "regular",
+          "partial",
+          "none",
+          "unavailable"
+        ],
+        "one_hot_indices": {
+          "regular": 109,
+          "partial": 110,
+          "none": 111,
+          "unavailable": 112
+        },
+        "mode": "regular",
+        "default_index": 109
+      },
+      {
+        "name": "nutritional_adequacy",
+        "categories": [
+          "balanced",
+          "moderate",
+          "inadequate",
+          "food_insecure"
+        ],
+        "one_hot_indices": {
+          "balanced": 113,
+          "moderate": 114,
+          "inadequate": 115,
+          "food_insecure": 116
+        },
+        "mode": "balanced",
+        "default_index": 113
+      },
+      {
+        "name": "physical_activity",
+        "categories": [
+          "regular",
+          "light",
+          "sedentary",
+          "bed_rest"
+        ],
+        "one_hot_indices": {
+          "regular": 117,
+          "light": 118,
+          "sedentary": 119,
+          "bed_rest": 120
+        },
+        "mode": "light",
+        "default_index": 118
+      },
+      {
+        "name": "morning_sickness_severity",
+        "categories": [
+          "none",
+          "mild",
+          "moderate",
+          "hyperemesis"
+        ],
+        "one_hot_indices": {
+          "none": 121,
+          "mild": 122,
+          "moderate": 123,
+          "hyperemesis": 124
+        },
+        "mode": "mild",
+        "default_index": 122
+      },
+      {
+        "name": "body_image_concern",
+        "categories": [
+          "none",
+          "mild",
+          "moderate",
+          "severe"
+        ],
+        "one_hot_indices": {
+          "none": 125,
+          "mild": 126,
+          "moderate": 127,
+          "severe": 128
+        },
+        "mode": "none",
+        "default_index": 125
+      },
+      {
+        "name": "healthcare_access",
+        "categories": [
+          "easy",
+          "moderate",
+          "difficult",
+          "remote"
+        ],
+        "one_hot_indices": {
+          "easy": 129,
+          "moderate": 130,
+          "difficult": 131,
+          "remote": 132
+        },
+        "mode": "easy",
+        "default_index": 129
+      },
+      {
+        "name": "midwife_rapport",
+        "categories": [
+          "strong",
+          "good",
+          "neutral",
+          "poor"
+        ],
+        "one_hot_indices": {
+          "strong": 133,
+          "good": 134,
+          "neutral": 135,
+          "poor": 136
+        },
+        "mode": "strong",
+        "default_index": 133
+      },
+      {
+        "name": "transport_security",
+        "categories": [
+          "reliable",
+          "shared",
+          "uncertain",
+          "emergency_only"
+        ],
+        "one_hot_indices": {
+          "reliable": 137,
+          "shared": 138,
+          "uncertain": 139,
+          "emergency_only": 140
+        },
+        "mode": "reliable",
+        "default_index": 137
+      },
+      {
+        "name": "housing_stability",
+        "categories": [
+          "own_home",
+          "family_home",
+          "rented",
+          "unstable"
+        ],
+        "one_hot_indices": {
+          "own_home": 141,
+          "family_home": 142,
+          "rented": 143,
+          "unstable": 144
+        },
+        "mode": "family_home",
+        "default_index": 142
+      },
+      {
+        "name": "education_tier",
+        "categories": [
+          "none",
+          "primary",
+          "secondary",
+          "tertiary",
+          "postgraduate",
+          "vocational"
+        ],
+        "one_hot_indices": {
+          "none": 145,
+          "primary": 146,
+          "secondary": 147,
+          "tertiary": 148,
+          "postgraduate": 149,
+          "vocational": 150
+        },
+        "mode": "secondary",
+        "default_index": 147
+      },
+      {
+        "name": "employment_status",
+        "categories": [
+          "homemaker",
+          "full_time",
+          "part_time",
+          "self_employed",
+          "student",
+          "unemployed"
+        ],
+        "one_hot_indices": {
+          "homemaker": 151,
+          "full_time": 152,
+          "part_time": 153,
+          "self_employed": 154,
+          "student": 155,
+          "unemployed": 156
+        },
+        "mode": "homemaker",
+        "default_index": 151
+      },
+      {
+        "name": "psychosocial_indicator_38",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 157,
+          "level_1": 158,
+          "level_2": 159,
+          "level_3": 160
+        },
+        "mode": "level_0",
+        "default_index": 157
+      },
+      {
+        "name": "psychosocial_indicator_39",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 161,
+          "level_1": 162,
+          "level_2": 163,
+          "level_3": 164
+        },
+        "mode": "level_0",
+        "default_index": 161
+      },
+      {
+        "name": "psychosocial_indicator_40",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 165,
+          "level_1": 166,
+          "level_2": 167,
+          "level_3": 168
+        },
+        "mode": "level_0",
+        "default_index": 165
+      },
+      {
+        "name": "psychosocial_indicator_41",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 169,
+          "level_1": 170,
+          "level_2": 171,
+          "level_3": 172
+        },
+        "mode": "level_0",
+        "default_index": 169
+      },
+      {
+        "name": "psychosocial_indicator_42",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 173,
+          "level_1": 174,
+          "level_2": 175,
+          "level_3": 176
+        },
+        "mode": "level_0",
+        "default_index": 173
+      },
+      {
+        "name": "psychosocial_indicator_43",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 177,
+          "level_1": 178,
+          "level_2": 179,
+          "level_3": 180
+        },
+        "mode": "level_0",
+        "default_index": 177
+      },
+      {
+        "name": "psychosocial_indicator_44",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 181,
+          "level_1": 182,
+          "level_2": 183,
+          "level_3": 184
+        },
+        "mode": "level_0",
+        "default_index": 181
+      },
+      {
+        "name": "psychosocial_indicator_45",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 185,
+          "level_1": 186,
+          "level_2": 187,
+          "level_3": 188
+        },
+        "mode": "level_0",
+        "default_index": 185
+      },
+      {
+        "name": "psychosocial_indicator_46",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 189,
+          "level_1": 190,
+          "level_2": 191,
+          "level_3": 192
+        },
+        "mode": "level_0",
+        "default_index": 189
+      },
+      {
+        "name": "psychosocial_indicator_47",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 193,
+          "level_1": 194,
+          "level_2": 195,
+          "level_3": 196
+        },
+        "mode": "level_0",
+        "default_index": 193
+      },
+      {
+        "name": "psychosocial_indicator_48",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 197,
+          "level_1": 198,
+          "level_2": 199,
+          "level_3": 200
+        },
+        "mode": "level_0",
+        "default_index": 197
+      },
+      {
+        "name": "psychosocial_indicator_49",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 201,
+          "level_1": 202,
+          "level_2": 203,
+          "level_3": 204
+        },
+        "mode": "level_0",
+        "default_index": 201
+      },
+      {
+        "name": "psychosocial_indicator_50",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 205,
+          "level_1": 206,
+          "level_2": 207,
+          "level_3": 208
+        },
+        "mode": "level_0",
+        "default_index": 205
+      },
+      {
+        "name": "psychosocial_indicator_51",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 209,
+          "level_1": 210,
+          "level_2": 211,
+          "level_3": 212
+        },
+        "mode": "level_0",
+        "default_index": 209
+      },
+      {
+        "name": "psychosocial_indicator_52",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 213,
+          "level_1": 214,
+          "level_2": 215,
+          "level_3": 216
+        },
+        "mode": "level_0",
+        "default_index": 213
+      },
+      {
+        "name": "psychosocial_indicator_53",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 217,
+          "level_1": 218,
+          "level_2": 219,
+          "level_3": 220
+        },
+        "mode": "level_0",
+        "default_index": 217
+      },
+      {
+        "name": "psychosocial_indicator_54",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 221,
+          "level_1": 222,
+          "level_2": 223,
+          "level_3": 224
+        },
+        "mode": "level_0",
+        "default_index": 221
+      },
+      {
+        "name": "psychosocial_indicator_55",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 225,
+          "level_1": 226,
+          "level_2": 227,
+          "level_3": 228
+        },
+        "mode": "level_0",
+        "default_index": 225
+      },
+      {
+        "name": "psychosocial_indicator_56",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 229,
+          "level_1": 230,
+          "level_2": 231,
+          "level_3": 232
+        },
+        "mode": "level_0",
+        "default_index": 229
+      },
+      {
+        "name": "psychosocial_indicator_57",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 233,
+          "level_1": 234,
+          "level_2": 235,
+          "level_3": 236
+        },
+        "mode": "level_0",
+        "default_index": 233
+      },
+      {
+        "name": "psychosocial_indicator_58",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 237,
+          "level_1": 238,
+          "level_2": 239,
+          "level_3": 240
+        },
+        "mode": "level_0",
+        "default_index": 237
+      },
+      {
+        "name": "psychosocial_indicator_59",
+        "categories": [
+          "level_0",
+          "level_1",
+          "level_2",
+          "level_3"
+        ],
+        "one_hot_indices": {
+          "level_0": 241,
+          "level_1": 242,
+          "level_2": 243,
+          "level_3": 244
+        },
+        "mode": "level_0",
+        "default_index": 241
+      }
+    ]
+  }
+}

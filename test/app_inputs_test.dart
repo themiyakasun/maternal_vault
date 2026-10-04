@@ -85,13 +85,38 @@ void main() {
       expect(find.text('This field is required'), findsOneWidget);
     });
 
-    testWidgets('suppresses the character counter under a maxLength', (
+    testWidgets('suppresses the character counter under a maxLength and validates clinical numeric bounds with unit labels', (
       WidgetTester tester,
     ) async {
-      await pumpField(tester, const AppTextField(label: 'Age', maxLength: 2));
+      final GlobalKey<FormState> formKey = await pumpField(
+        tester,
+        AppTextField(
+          label: 'Systolic BP (mmHg)',
+          hint: '90 - 200 mmHg',
+          maxLength: 3,
+          keyboardType: TextInputType.number,
+          validator: (String? value) {
+            final int? sbp = int.tryParse(value ?? '');
+            if (sbp == null || sbp < 70 || sbp > 240) {
+              return 'Enter SBP between 70 and 240 mmHg';
+            }
+            return null;
+          },
+        ),
+      );
 
       // maxLength is there to cap the input, not to invite counting.
-      expect(find.text('0/2'), findsNothing);
+      expect(find.text('0/3'), findsNothing);
+      expect(find.text('Systolic BP (mmHg)'), findsOneWidget);
+      expect(find.text('90 - 200 mmHg'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextFormField), '310');
+      expect(formKey.currentState!.validate(), isFalse);
+      await tester.pump();
+      expect(find.text('Enter SBP between 70 and 240 mmHg'), findsOneWidget);
+
+      await tester.enterText(find.byType(TextFormField), '120');
+      expect(formKey.currentState!.validate(), isTrue);
     });
   });
 

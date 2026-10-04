@@ -12,7 +12,9 @@ import '../../../../core/widgets/inputs/app_text_field.dart';
 import '../../../../l10n/generated/app_localizations.dart';
 import '../../domain/delivery_plan.dart';
 import '../../domain/family_planning_method.dart';
+import '../../domain/read_only_immutability_guard.dart';
 import '../../domain/transport_mode.dart';
+import '../widgets/clinical_read_only_banner.dart';
 import '../widgets/obstetric_labels.dart';
 import '../widgets/plan_labels.dart';
 
@@ -24,7 +26,12 @@ import '../widgets/plan_labels.dart';
 /// is the normal state for most of the pregnancy. [onSave] is the seam the record
 /// layer drops into; the numeric fields are range-checked regardless.
 class PlanScreen extends StatefulWidget {
-  const PlanScreen({super.key, this.plan = const DeliveryPlan.empty(), this.onSave});
+  const PlanScreen({
+    super.key,
+    this.plan = const DeliveryPlan.empty(),
+    this.onSave,
+    this.isReadOnly = false,
+  });
 
   /// The plan to edit. Defaults to an empty one — a fresh form.
   final DeliveryPlan plan;
@@ -33,12 +40,19 @@ class PlanScreen extends StatefulWidget {
   /// pretending to have saved.
   final ValueChanged<DeliveryPlan>? onSave;
 
+  /// True when the record was imported from an official MOH Midwife QR sync (`"ro": 1`).
+  /// Enforces 100% edit lockout via [ReadOnlyImmutabilityGuard].
+  final bool isReadOnly;
+
   @override
   State<PlanScreen> createState() => _PlanScreenState();
 }
 
 class _PlanScreenState extends State<PlanScreen> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+
+  ReadOnlyImmutabilityGuard get _immutabilityGuard =>
+      ReadOnlyImmutabilityGuard(isClinicalReadOnly: widget.isReadOnly);
 
   late final TextEditingController _hospital;
   late final TextEditingController _transportCost;
@@ -102,6 +116,7 @@ class _PlanScreenState extends State<PlanScreen> {
   @override
   Widget build(BuildContext context) {
     final AppLocalizations l10n = AppLocalizations.of(context);
+    final bool isLocked = _immutabilityGuard.isLocked;
 
     return Form(
       key: _formKey,
@@ -115,7 +130,14 @@ class _PlanScreenState extends State<PlanScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            _emergencyPlan(l10n),
+            if (isLocked) ...<Widget>[
+              const ClinicalReadOnlyBanner(),
+              const SizedBox(height: AppSpacing.componentGap),
+            ],
+            IgnorePointer(
+              ignoring: isLocked,
+              child: _emergencyPlan(l10n),
+            ),
             const SizedBox(height: AppSpacing.componentGap),
             _deliverySummary(context, l10n),
             const SizedBox(height: AppSpacing.componentGap),
@@ -125,17 +147,22 @@ class _PlanScreenState extends State<PlanScreen> {
             const SizedBox(height: AppSpacing.componentGap),
             _postpartumClinicCareSection(l10n),
             const SizedBox(height: AppSpacing.componentGap),
-            _familyPlanningSection(l10n),
+            IgnorePointer(
+              ignoring: isLocked,
+              child: _familyPlanningSection(l10n),
+            ),
             const SizedBox(height: AppSpacing.componentGap),
             _antenatalClassesSection(l10n),
             const SizedBox(height: AppSpacing.componentGap),
             _breastfeedingDirectivesCard(l10n),
-            const SizedBox(height: AppSpacing.sectionGap),
-            AppPrimaryButton(
-              label: l10n.actionSavePlan,
-              icon: Icons.save_outlined,
-              onPressed: _save,
-            ),
+            if (!isLocked) ...<Widget>[
+              const SizedBox(height: AppSpacing.sectionGap),
+              AppPrimaryButton(
+                label: l10n.actionSavePlan,
+                icon: Icons.save_outlined,
+                onPressed: _save,
+              ),
+            ],
           ],
         ),
       ),
@@ -555,31 +582,36 @@ class _PlanScreenState extends State<PlanScreen> {
   }
 
   void _save() {
-    // Dismissing the keyboard first stops the error text appearing behind it on
-    // a field near the bottom of the form.
-    SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
+    _immutabilityGuard.guardMutation(() {
+      // Dismissing the keyboard first stops the error text appearing behind it on
+      // a field near the bottom of the form.
+      SystemChannels.textInput.invokeMethod<void>('TextInput.hide');
 
-    if (!(_formKey.currentState?.validate() ?? false)) return;
+      if (!(_formKey.currentState?.validate() ?? false)) return;
 
-    final DeliveryPlan plan = widget.plan.copyWith(
-      intendedHospital: _trimmedOrNull(_hospital),
-      transportMode: _transportMode,
-      transportCostEstimate: int.tryParse(_transportCost.text.trim()),
-      distanceKm: int.tryParse(_distance.text.trim()),
-      estimatedTimeMinutes: int.tryParse(_estTime.text.trim()),
-      familyPlanningMethod: _familyPlanning,
-    );
+      final DeliveryPlan plan = widget.plan.copyWith(
+        intendedHospital: _trimmedOrNull(_hospital),
+        transportMode: _transportMode,
+        transportCostEstimate: int.tryParse(_transportCost.text.trim()),
+        distanceKm: int.tryParse(_distance.text.trim()),
+        estimatedTimeMinutes: int.tryParse(_estTime.text.trim()),
+        familyPlanningMethod: _familyPlanning,
+      );
 
-    final ValueChanged<DeliveryPlan>? onSave = widget.onSave;
-    if (onSave != null) {
-      onSave(plan);
-      return;
-    }
+      final ValueChanged<DeliveryPlan>? onSave =
+          _immutabilityGuard.guardCallback(widget.onSave);
+      if (onSave != null) {
+        onSave(plan);
+        return;
+      }
 
-    // TODO: remove once a caller supplies onSave and owns the confirmation.
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(AppLocalizations.of(context).planSaveNotConnected)),
-    );
+      // TODO: remove once a caller supplies onSave and owns the confirmation.
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(AppLocalizations.of(context).planSaveNotConnected),
+        ),
+      );
+    });
   }
 
   /// Empty text means "not answered", stored as null rather than a blank string.

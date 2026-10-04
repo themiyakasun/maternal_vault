@@ -77,11 +77,15 @@ void main() {
       expect(map['delivery']['distanceKm'], 12);
       expect(map['delivery']['estMinutes'], 25);
 
-      // Privacy verification: verify confidential personal details are excluded
+      // Privacy verification: verify confidential personal & mental health details are excluded
       expect(map.containsKey('medicalHistory'), false);
       expect(map.containsKey('surgeries'), false);
       expect(map.containsKey('hiv'), false);
       expect(map.containsKey('syphilis'), false);
+      expect(map.containsKey('epds'), false);
+      expect(map.containsKey('mentalHealth'), false);
+      expect(map.containsKey('mentalHealthNotes'), false);
+      expect(map.containsKey('moods'), false);
     });
 
     test('generatePartnerQrString and parsePartnerPayload roundtrip cleanly', () {

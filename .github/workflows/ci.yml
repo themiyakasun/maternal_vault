@@ -1,0 +1,35 @@
+name: Maternal Vault Automated Test Suite CI
+
+on:
+  push:
+    branches: [ main, master, develop ]
+  pull_request:
+    branches: [ main, master, develop ]
+  workflow_dispatch:
+
+jobs:
+  test-suite-verification:
+    name: Automated Test Suite (13 Files / 110 Tests)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Flutter SDK
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - name: Install Dependencies
+        run: flutter pub get
+
+      - name: Verify Localization Generation
+        run: flutter gen-l10n
+
+      - name: Run Static Analysis
+        run: flutter analyze --no-fatal-infos
+
+      - name: Execute 13-File Automated Test Suite & Output Verification Table
+        run: dart run tool/run_test_suite.dart

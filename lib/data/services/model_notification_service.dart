@@ -159,6 +159,7 @@ class ModelNotificationService {
       anxietyScore: resolvedAnxiety,
       sleepDisturbed: resolvedSleep,
       reportedFatigue: resolvedFatigue,
+      itemResponses: latestMood?.itemResponses,
     );
 
     for (final alert in result.alerts) {

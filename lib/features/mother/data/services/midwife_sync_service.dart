@@ -10,6 +10,7 @@ import 'package:maternal_vault/features/mother/domain/education_level.dart';
 import 'package:maternal_vault/features/mother/domain/key_vitals.dart';
 import 'package:maternal_vault/features/mother/domain/medical_history.dart';
 import 'package:maternal_vault/features/mother/domain/obstetric_history.dart';
+import 'package:maternal_vault/features/mother/domain/read_only_immutability_guard.dart';
 import 'package:maternal_vault/features/mother/domain/transport_mode.dart';
 
 enum QrTransferMode {
@@ -35,6 +36,9 @@ class SyncResult {
     this.deliveryPlan,
     this.isCameraLink = false,
     this.cameraLinkUrl,
+    this.isClinicalReadOnly = false,
+    this.epdsScore,
+    this.checksumVerified = true,
   });
 
   final bool isSuccess;
@@ -51,6 +55,18 @@ class SyncResult {
   final DeliveryPlan? deliveryPlan;
   final bool isCameraLink;
   final String? cameraLinkUrl;
+
+  /// True when the synced record carries `"ro": 1` (`is_clinical_readonly = true`),
+  /// activating the 100% edit lockout via [ReadOnlyImmutabilityGuard].
+  final bool isClinicalReadOnly;
+
+  /// Optional EPDS perinatal depression screening score (`"epds"`, 0–30)
+  /// carried in the QR payload.
+  final int? epdsScore;
+
+  /// True when the payload's `"chk"` SHA-256 checksum was valid (or omitted on
+  /// legacy payloads); false when rejected due to tampering/corruption.
+  final bool checksumVerified;
 }
 
 typedef SaveSyncDataCallback = Future<void> Function({
@@ -64,6 +80,7 @@ typedef SaveSyncDataCallback = Future<void> Function({
   String? midwifeName,
   int version,
   String? payloadHash,
+  bool isClinicalReadOnly,
 });
 
 class MidwifeSyncService {
@@ -72,8 +89,8 @@ class MidwifeSyncService {
   const MidwifeSyncService({this.onSaveSyncData});
 
   /// Parses, validates, and securely stores the midwife sync QR code payload.
-  /// Automatically decompresses Zlib/Deflate compressed payloads (MVZ:) as well
-  /// as legacy plain/base64 JSON.
+  /// Automatically decompresses Gzip (`MVZ1:GZ:`), Zlib (`MVZ:`), and plain JSON,
+  /// and verifies the pre-insertion `"chk"` SHA-256 checksum before saving.
   Future<SyncResult> processQrPayload(String rawPayload) async {
     try {
       final trimmed = rawPayload.trim();
@@ -112,6 +129,20 @@ class MidwifeSyncService {
         );
       }
 
+      // ── Pre-insertion SHA-256 Checksum Guard ("chk", TC-11) ──
+      if (!QrPayloadCompressor.verifyPayloadChecksum(jsonMap)) {
+        final String chkInput = QrPayloadCompressor.buildChecksumInput(jsonMap);
+        debugPrint(
+          'Checksum mismatch for chkInput="$chkInput", chk="${jsonMap['chk']}", keys=${jsonMap.keys.toList()}',
+        );
+        return SyncResult(
+          isSuccess: false,
+          checksumVerified: false,
+          message:
+              'Scan Failed: Corrupted QR Payload (SHA-256 checksum verification failed).\n[chkInput: $chkInput]',
+        );
+      }
+
       // ── Compact payload normalisation ──
       // The web dashboard's v2 QR format uses `_mv: 1` with short keys and
       // visits encoded as positional arrays. Expand it into the flat schema
@@ -120,9 +151,12 @@ class MidwifeSyncService {
         jsonMap = _expandCompactPayload(jsonMap);
       }
 
-      // Check format: Midwife Dashboard flat schema vs. nested schema
+      // Check format: Midwife Dashboard / Thesis flat schema vs. nested schema
       final bool isDashboardFlat = jsonMap.containsKey('name') ||
           jsonMap.containsKey('app') ||
+          jsonMap.containsKey('pid') ||
+          jsonMap.containsKey('sbp') ||
+          jsonMap.containsKey('dbp') ||
           jsonMap.containsKey('abha') ||
           jsonMap.containsKey('ga');
 
@@ -135,16 +169,22 @@ class MidwifeSyncService {
       String clinicName;
       String midwifeName;
       int version = 1;
+      int? epdsScore;
 
       if (isDashboardFlat) {
-        // --- 1. BasicProfile from Dashboard ---
+        // --- 1. BasicProfile from Dashboard / Thesis Schema ---
         final motherName =
             (jsonMap['name'] ?? jsonMap['motherName'] ?? '').toString().trim();
-        final regId =
-            (jsonMap['id'] ?? jsonMap['regNo'] ?? '').toString().trim();
-        final nationalId = (jsonMap['abha'] ??
-                jsonMap['nic'] ??
+        final regId = (jsonMap['pid'] ??
+                jsonMap['id'] ??
+                jsonMap['regNo'] ??
+                '')
+            .toString()
+            .trim();
+        final nationalId = (jsonMap['nic'] ??
                 jsonMap['nationalId'] ??
+                jsonMap['abha'] ??
+                jsonMap['pid'] ??
                 '')
             .toString()
             .trim();
@@ -177,7 +217,7 @@ class MidwifeSyncService {
           registrationDate: _parseFlexibleDate(jsonMap['registrationDate']) ??
               _parseFlexibleDate(jsonMap['at']) ??
               DateTime(2024, 6, 9),
-          nationalId: nationalId.isNotEmpty ? nationalId : '91-8706-6196-5349',
+          nationalId: nationalId.isNotEmpty ? nationalId : '199856201458',
           address: address.isNotEmpty ? address : 'Rampur North Sector 2',
           phoneNumber: (jsonMap['phone'] ?? jsonMap['phoneNumber'])?.toString(),
           clinicName: clinicName.isNotEmpty ? clinicName : 'Rampur MOH Clinic',
@@ -199,7 +239,7 @@ class MidwifeSyncService {
           emergencyContactAddress: address.isNotEmpty ? address : 'Rampur North Sector 2',
         );
 
-        // --- 2. KeyVitals from Dashboard ---
+        // --- 2. KeyVitals from Dashboard / Thesis Schema ---
         final Map<String, dynamic> rawVitals =
             jsonMap['vitals'] is Map<String, dynamic>
                 ? jsonMap['vitals'] as Map<String, dynamic>
@@ -233,7 +273,7 @@ class MidwifeSyncService {
         }
 
         final (vitalsSys, vitalsDia) =
-            _parseBloodPressure(rawVitals['bp'] ?? jsonMap['bp']);
+            _resolveBloodPressure(rawVitals, jsonMap);
         final Map<String, dynamic> rawLabsPreview =
             jsonMap['investigations'] is Map<String, dynamic>
                 ? jsonMap['investigations'] as Map<String, dynamic>
@@ -379,13 +419,20 @@ class MidwifeSyncService {
           pregnancies: pastPregnancies,
         );
 
-        // --- 5. ClinicRecord & ClinicVisits from Dashboard ---
-        final (systolic, diastolic) = _parseBloodPressure(rawVitals['bp']);
+        // --- 5. ClinicRecord & ClinicVisits from Dashboard / Thesis Schema ---
+        final (systolic, diastolic) =
+            _resolveBloodPressure(rawVitals, jsonMap);
+        epdsScore = _parseNumericPrefix(
+          jsonMap['epds'] ??
+              jsonMap['epdsScore'] ??
+              rawVitals['epds'] ??
+              riskMap['epds'],
+        );
         int? fundalCm = _parseNumericPrefix(jsonMap['fundal']);
         if (fundalCm != null && fundalCm > 60 && fundalCm < 1000) {
           fundalCm = fundalCm % 100;
         }
-        final fhr = _parseNumericPrefix(rawVitals['fhr']);
+        final fhr = _parseNumericPrefix(rawVitals['fhr'] ?? jsonMap['fhr']);
         final visitDate = _parseFlexibleDate(jsonMap['at']) ?? DateTime.now();
         final urineAlb = _parseUrineAlbumin(notes, rawVitals['urineAlbumin']);
 
@@ -466,10 +513,13 @@ class MidwifeSyncService {
             jsonMap['investigations'] is Map<String, dynamic>
                 ? jsonMap['investigations'] as Map<String, dynamic>
                 : <String, dynamic>{};
-        final hbVal = rawLabs['hb'] ?? rawVitals['hb'];
+        final hbVal = rawLabs['hb'] ?? rawVitals['hb'] ?? jsonMap['hb'];
         final hbText = hbVal != null ? 'Hb: $hbVal g/dL' : null;
-        final bloodSugarText =
-            (rawLabs['bloodSugar'] ?? rawLabs['sugar'])?.toString();
+        final bloodSugarText = (rawLabs['bloodSugar'] ?? rawLabs['sugar'])
+                ?.toString() ??
+            (vitalsBsMgDl != null
+                ? 'Fasting: ${vitalsBsMgDl.toStringAsFixed(0)} mg/dL'
+                : null);
         final vdrlVal = (rawLabs['vdrl'] ??
                 rawLabs['syphilis'] ??
                 rawLabs['vdrlResult'] ??
@@ -702,6 +752,10 @@ class MidwifeSyncService {
         version = jsonMap['version'] as int? ?? 1;
       }
 
+      // Evaluate Read-Only Immutability Lock ("ro": 1 / is_clinical_readonly)
+      final bool isClinicalReadOnly =
+          ReadOnlyImmutabilityGuard.isPayloadReadOnly(jsonMap);
+
       // Calculate payload hash for tamper-evident audit
       final payloadHash = sha256.convert(utf8.encode(trimmed)).toString();
 
@@ -718,6 +772,7 @@ class MidwifeSyncService {
           midwifeName: midwifeName,
           version: version,
           payloadHash: payloadHash,
+          isClinicalReadOnly: isClinicalReadOnly,
         );
       } else {
         await EncryptedDatabaseHelper.saveSyncData(
@@ -731,6 +786,7 @@ class MidwifeSyncService {
           midwifeName: midwifeName,
           version: version,
           payloadHash: payloadHash,
+          isClinicalReadOnly: isClinicalReadOnly,
         );
       }
 
@@ -748,6 +804,8 @@ class MidwifeSyncService {
         obstetricHistory: history,
         clinicRecord: clinicRecord,
         deliveryPlan: deliveryPlan,
+        isClinicalReadOnly: isClinicalReadOnly,
+        epdsScore: epdsScore,
       );
     } catch (e, stack) {
       debugPrint('Sync processing error: $e\n$stack');
@@ -758,32 +816,47 @@ class MidwifeSyncService {
     }
   }
 
-  /// Generates a realistic sample sync payload matching the midwife dashboard export.
+  /// Generates a realistic sample sync payload matching both the Thesis Table 4.5
+  /// key dictionary (`pid`, `age`, `ga`, `sbp`, `dbp`, `bs`, `temp`, `hr`, `hb`,
+  /// `epds`, `ro`, `chk`) and the midwife dashboard export schema.
   static String generateSamplePayload({bool compressed = true, bool useGzip = false}) {
     final samplePayload = <String, dynamic>{
       'app': 'MaternaVault',
       'ver': '1.2.0',
+      // Thesis Table 4.5 compact clinical keys
+      'pid': '#6720',
       'id': '#6720',
       'name': 'Kumari Sandamali Perera',
       'age': 26,
+      'ga': '38w 4d',
+      'sbp': 120,
+      'dbp': 80,
+      'bs': 82,
+      'temp': 98.4,
+      'hr': 78,
+      'hb': 11.8,
+      'epds': 4,
+      'ro': 1,
+      // Additional obstetric & clinic context
       'gravida': 2,
       'para': 1,
       'livingChildren': 1,
-      'abha': '91-8706-6196-5349',
+      'nic': '199856201458',
       'village': 'Rampur North Sector 2',
-      'ga': '38w 4d',
       'trim': 3,
       'edd': '2025-01-17',
       'lmp': '2024-04-12',
       'fundal': '38 cm',
       'vitals': <String, dynamic>{
         'bp': '120/80',
+        'sbp': 120,
+        'dbp': 80,
         'hb': 11.8,
         'bmi': 27.4,
         'fhr': '140 bpm',
         'hr': 78,
         'temp': 98.4,
-        'bs': 84.0,
+        'bs': 82,
         'weight': 68.5,
         'bloodGroup': 'B +ve',
         'height': '158',
@@ -964,7 +1037,7 @@ class MidwifeSyncService {
       'investigations': <String, dynamic>{
         'hb': '11.8',
         'bloodGroup': 'B +ve',
-        'bloodSugar': 'Fasting: 84 mg/dL, 2h PP: 110 mg/dL',
+        'bloodSugar': 'Fasting: 82 mg/dL, 2h PP: 110 mg/dL',
         'vdrl': 'Non-reactive',
       },
       'deliveryPlan': <String, dynamic>{
@@ -975,6 +1048,10 @@ class MidwifeSyncService {
         'complications': 'None',
       },
     };
+
+    // Attach 64-char lowercase SHA-256 checksum ("chk") over "{pid}|{sbp}|{dbp}|{bs}|{temp}|{hr}|{epds}|{ro}"
+    samplePayload['chk'] =
+        QrPayloadCompressor.computePayloadChecksum(samplePayload);
 
     if (compressed) {
       return useGzip
@@ -1058,6 +1135,39 @@ class MidwifeSyncService {
       return int.tryParse(numMatch.group(1)!) ?? 0;
     }
     return 0;
+  }
+
+  /// Resolves systolic and diastolic blood pressure from either explicit
+  /// `"sbp"` / `"dbp"` keys (Thesis Table 4.5) or combined `"bp"` (`"120/80"`).
+  static (int?, int?) _resolveBloodPressure(
+    Map<String, dynamic> primary, [
+    Map<String, dynamic>? fallback,
+  ]) {
+    final int? explicitSbp = _parseNumericPrefix(
+      primary['sbp'] ??
+          primary['systolic'] ??
+          primary['systolicBp'] ??
+          fallback?['sbp'] ??
+          fallback?['systolic'] ??
+          fallback?['systolicBp'],
+    );
+    final int? explicitDbp = _parseNumericPrefix(
+      primary['dbp'] ??
+          primary['diastolic'] ??
+          primary['diastolicBp'] ??
+          fallback?['dbp'] ??
+          fallback?['diastolic'] ??
+          fallback?['diastolicBp'],
+    );
+    if (explicitSbp != null || explicitDbp != null) {
+      return (explicitSbp, explicitDbp);
+    }
+    return _parseBloodPressure(
+      primary['bp'] ??
+          primary['bloodPressure'] ??
+          fallback?['bp'] ??
+          fallback?['bloodPressure'],
+    );
   }
 
   static (int?, int?) _parseBloodPressure(dynamic bpValue) {
@@ -1279,8 +1389,7 @@ class MidwifeSyncService {
       final weekVal = _parseWeeks(map['week'] ?? map['ga']);
       final visitDate =
           _parseFlexibleDate(map['date'] ?? map['at']) ?? DateTime.now();
-      final (systolic, diastolic) =
-          _parseBloodPressure(map['bp'] ?? map['bloodPressure']);
+      final (systolic, diastolic) = _resolveBloodPressure(map);
       int? fundalCm =
           _parseNumericPrefix(map['fundal'] ?? map['fundalHeightCm']);
       if (fundalCm != null) {
@@ -1535,38 +1644,44 @@ class MidwifeSyncService {
   /// Expands a compact `_mv: 1` payload into the flat dashboard schema the
   /// rest of `processQrPayload` already knows how to parse.
   ///
-  /// Key mapping:
+  /// Key mapping (supports both Thesis Table 4.5 & web portal short keys):
   /// ```
-  /// n  → name          a  → age           g  → gravida
-  /// p  → para          lc → livingChildren ga → ga
-  /// w  → (week number) bp → vitals.bp     hb → vitals.hb
-  /// fhr→ vitals.fhr    wt → vitals.weight bg → vitals.bloodGroup
-  /// rt → risk.tier     rc → risk.cond     rp → risk.prob
-  /// pt → partnerName   mh → medicalHistory lr → investigations
-  /// pr → pregnancies   vs → visits (arrays)
+  /// pid/id → id           n  → name          age/a → age           g  → gravida
+  /// p  → para             lc → livingChildren ga → ga              w  → (week number)
+  /// sbp/dbp/bp → vitals.bp hb → vitals.hb    fhr→ vitals.fhr       hr → vitals.hr
+  /// temp → vitals.temp    bs → vitals.bs     epds → epds           ro → ro
+  /// wt → vitals.weight    bg → vitals.bloodGroup
+  /// rt → risk.tier        rc → risk.cond     rp → risk.prob
+  /// pt → partnerName      mh → medicalHistory lr → investigations
+  /// pr → pregnancies      vs → visits (arrays)
   /// ```
   static Map<String, dynamic> _expandCompactPayload(
       Map<String, dynamic> c) {
     final Map<String, dynamic> out = <String, dynamic>{
       'app': 'MaternaVault',
       'ver': '2.0.0-compact',
+      'ro': c['ro'] ?? c['is_clinical_readonly'] ?? 1,
       'village': 'Rampur North Sector 2',
       'clinic': 'Rampur MOH Clinic',
       'mohArea': 'Rampur',
       'phmArea': 'Rampur North Sector 2',
-      'nationalId': '91-8706-6196-5349',
+      'nationalId':
+          (c['nic'] ?? c['nationalId'] ?? c['pid'] ?? '199856201458').toString(),
     };
 
     // ── Top-level scalars ──
-    if (c['id'] != null) out['id'] = c['id'];
+    if (c['pid'] != null) out['pid'] = c['pid'];
+    if (c['id'] != null || c['pid'] != null) out['id'] = c['id'] ?? c['pid'];
     if (c['n'] != null) out['name'] = c['n'];
-    if (c['a'] != null) out['age'] = c['a'];
+    if (c['age'] != null || c['a'] != null) out['age'] = c['age'] ?? c['a'];
     if (c['g'] != null) out['gravida'] = c['g'];
     if (c['p'] != null) out['para'] = c['p'];
     if (c['lc'] != null) out['livingChildren'] = c['lc'];
     if (c['ga'] != null) out['ga'] = c['ga'];
     if (c['edd'] != null) out['edd'] = c['edd'];
     if (c['lmp'] != null) out['lmp'] = c['lmp'];
+    if (c['epds'] != null) out['epds'] = c['epds'];
+    if (c['chk'] != null) out['chk'] = c['chk'];
 
     // Partner name (stored in BasicProfile as father / husband and emergency contact)
     if (c['pt'] != null) {
@@ -1576,7 +1691,19 @@ class MidwifeSyncService {
 
     // ── Vitals ──
     final Map<String, dynamic> vitals = <String, dynamic>{};
-    if (c['bp'] != null) vitals['bp'] = c['bp'];
+    if (c['sbp'] != null) {
+      out['sbp'] = c['sbp'];
+      vitals['sbp'] = c['sbp'];
+    }
+    if (c['dbp'] != null) {
+      out['dbp'] = c['dbp'];
+      vitals['dbp'] = c['dbp'];
+    }
+    if (c['bp'] != null) {
+      vitals['bp'] = c['bp'];
+    } else if (c['sbp'] != null && c['dbp'] != null) {
+      vitals['bp'] = '${c['sbp']}/${c['dbp']}';
+    }
     if (c['hb'] != null) vitals['hb'] = c['hb'];
     if (c['fhr'] != null) vitals['fhr'] = c['fhr'];
     if (c['hr'] != null || c['maternalHeartRate'] != null || c['pulse'] != null) {

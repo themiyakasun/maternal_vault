@@ -112,6 +112,34 @@ void main() {
     expect(find.text('158 cm'), findsOneWidget);
     expect(find.text('None'), findsOneWidget);
     expect(find.text('—'), findsNothing);
+
+    // Verify read-only state binding hides Save button and shows MOH read-only banner
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: AppTheme.light,
+        supportedLocales: AppLanguage.locales,
+        localizationsDelegates: const <LocalizationsDelegate<Object>>[
+          AppLocalizations.delegate,
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        home: const Scaffold(
+          body: BasicProfileScreen(
+            vitals: KeyVitals(
+              bloodGroup: 'O+',
+              bmi: '22.4',
+              heightCm: '158',
+              allergies: 'None',
+            ),
+            isReadOnly: true,
+          ),
+        ),
+      ),
+    );
+    await tester.pumpAndSettle();
+    expect(find.text('Official MOH Clinical Record (Read-Only)'), findsOneWidget);
+    expect(find.text('Save Profile'), findsNothing);
   });
 
   testWidgets('Save without a mother name blocks and does not submit', (

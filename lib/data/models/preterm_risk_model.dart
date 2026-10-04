@@ -7,6 +7,7 @@ import '../../features/mother/domain/clinic_record.dart';
 import '../../features/mother/domain/key_vitals.dart';
 import '../../features/mother/domain/medical_history.dart';
 import '../../features/mother/domain/obstetric_history.dart';
+import 'feature_vector_adapter.dart';
 import 'model_notification.dart';
 
 /// Prediction result from the Preterm Birth Risk Predictor.
@@ -16,12 +17,18 @@ class PretermRiskResult {
     required this.severity,
     required this.riskFactors,
     this.rawOutput = const <double>[],
+    this.inputVector = const <double>[],
   });
 
   final double probability;
   final AlertSeverity severity;
   final List<String> riskFactors;
   final List<double> rawOutput;
+
+  /// The 37-dimensional feature vector mapped from the 13 SINASC clinical features
+  /// (`StandardScaler` on 4 numeric features + `OneHotEncoder` on 9 categorical features,
+  /// excluding `gestational_age_weeks` and `birth_weight_grams`).
+  final List<double> inputVector;
 
   bool get isElevated => severity.isElevated;
 
@@ -63,6 +70,7 @@ class PretermRiskResult {
       metrics: <String, dynamic>{
         'probability': probability,
         'riskFactors': riskFactors,
+        'inputVectorDim': inputVector.length,
       },
     );
   }
@@ -70,11 +78,12 @@ class PretermRiskResult {
 
 /// Preterm Birth Risk Predictor running the quantized INT8 neural network model.
 ///
-/// Evaluates maternal clinical indicators (37 features in model vector) including:
-/// - Gestational age & fundal height progression
-/// - Previous preterm births & obstetric history
-/// - Maternal age & blood pressure
-/// - Cervical / maternal complications
+/// Maps the 13 Brazilian SINASC clinical features via [OnDeviceFeatureVectorAdapter]
+/// (`feature_metadata.json` + `imputer.pkl`) into the 37-element input tensor:
+/// - 4 `StandardScaler` numeric features (`maternal_age`, `previous_c_sections`,
+///   `previous_vaginal_births`, `previous_miscarriages`) at indices `0..3`.
+/// - 9 `OneHotEncoder` categorical features across indices `4..36`.
+/// - Explicitly drops `gestational_age_weeks` and `birth_weight_grams` to prevent target leakage.
 class PretermRiskModel {
   static const String modelAssetPath = 'assets/models/preterm_model_int8.tflite';
   static const String modelFilePath = 'lib/data/models/preterm_model_int8.tflite';
@@ -114,6 +123,17 @@ class PretermRiskModel {
   }) async {
     await loadModel();
 
+    // Build the 37-dimensional SINASC feature vector via feature_metadata.json & imputer.pkl
+    // (strictly dropping gestational_age_weeks to prevent target leakage).
+    final List<double> featureVector =
+        await OnDeviceFeatureVectorAdapter.buildPretermFeatureVector(
+      profile: profile,
+      vitals: vitals,
+      obstetric: obstetric,
+      clinic: clinic,
+      medicalHistory: medicalHistory,
+    );
+
     final factors = <String>[];
 
     final int age = profile.mother.age ?? 26;
@@ -121,8 +141,10 @@ class PretermRiskModel {
       factors.add('Maternal age ($age years)');
     }
 
-    // Check previous preterm history
+    // Check previous preterm history & C-sections / miscarriages
     bool hasPriorPreterm = false;
+    int priorCSections = 0;
+    int priorMiscarriages = 0;
     if (obstetric != null) {
       for (final p in obstetric.pregnancies) {
         if (p.term == PregnancyTerm.preterm ||
@@ -130,41 +152,39 @@ class PretermRiskModel {
             (p.birthWeightKg != null && p.birthWeightKg! < 2.5)) {
           hasPriorPreterm = true;
           factors.add('Previous preterm delivery (${p.year})');
-          break;
+        }
+        if (p.deliveryMode == DeliveryMode.caesarean) {
+          priorCSections++;
+        }
+        if (p.outcome == PregnancyOutcome.miscarriage) {
+          priorMiscarriages++;
         }
       }
     }
+    if (priorCSections > 0) {
+      factors.add('Previous C-section ($priorCSections)');
+    }
+    if (priorMiscarriages > 0) {
+      factors.add('Previous miscarriage ($priorMiscarriages)');
+    }
 
-    // Check BP
+    // Check BP / arterial hypertension
     double systolic = 120.0;
     double diastolic = 80.0;
     if (clinic != null && clinic.visits.isNotEmpty) {
-      final v = clinic.visits.first;
+      final v = clinic.visits.reduce((a, b) => a.week >= b.week ? a : b);
       systolic = (v.systolic ?? 120).toDouble();
       diastolic = (v.diastolic ?? 80).toDouble();
+    } else if (vitals.systolicBp != null && vitals.diastolicBp != null) {
+      systolic = vitals.systolicBp!;
+      diastolic = vitals.diastolicBp!;
     }
     if (systolic >= 140 || diastolic >= 90) {
-      factors.add('Hypertension ($systolic/$diastolic mmHg)');
-    }
-
-    // Check gestational weeks
-    int currentWeek = obstetric?.poaAtRegistrationWeeks ?? 36;
-    if (clinic != null && clinic.visits.isNotEmpty) {
-      currentWeek = clinic.visits.first.week;
+      factors.add('Hypertension (${systolic.toInt()}/${diastolic.toInt()} mmHg)');
     }
 
     if (_interpreter != null) {
       try {
-        // Construct 37-element feature vector
-        final List<double> featureVector = List<double>.filled(37, 0.0);
-        featureVector[0] = age / 50.0;
-        featureVector[1] = currentWeek / 42.0;
-        featureVector[2] = systolic / 180.0;
-        featureVector[3] = diastolic / 120.0;
-        featureVector[4] = hasPriorPreterm ? 1.0 : 0.0;
-        featureVector[5] = (obstetric?.gravidity ?? 1).toDouble() / 10.0;
-        featureVector[6] = (obstetric?.parity ?? 0).toDouble() / 10.0;
-
         final input = [featureVector];
         final output = [
           [0.0]
@@ -187,18 +207,20 @@ class PretermRiskModel {
           severity: severity,
           riskFactors: factors,
           rawOutput: [prob],
+          inputVector: featureVector,
         );
       } catch (e) {
         debugPrint('PretermRiskModel inference error: $e');
       }
     }
 
-    // Clinical expert heuristic evaluation
+    // Clinical expert heuristic evaluation (using SINASC features, without gestational_age_weeks leakage)
     double score = 0.05;
     if (hasPriorPreterm) score += 0.45;
+    if (priorCSections > 0) score += 0.10;
+    if (priorMiscarriages > 0) score += 0.10;
     if (systolic >= 140 || diastolic >= 90) score += 0.25;
     if (age < 18 || age > 35) score += 0.15;
-    if (currentWeek < 37 && currentWeek > 24) score += 0.10;
 
     final prob = score.clamp(0.0, 0.95);
     AlertSeverity severity = AlertSeverity.low;
@@ -215,6 +237,7 @@ class PretermRiskModel {
       severity: severity,
       riskFactors: factors,
       rawOutput: [prob],
+      inputVector: featureVector,
     );
   }
 
