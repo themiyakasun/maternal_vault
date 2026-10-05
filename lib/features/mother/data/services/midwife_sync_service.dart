@@ -210,6 +210,22 @@ class MidwifeSyncService {
                 '')
             .toString()
             .trim();
+        final partnerOccupation = (jsonMap['partnerOccupation'] ??
+                jsonMap['fatherOccupation'] ??
+                jsonMap['pto'] ??
+                '')
+            .toString()
+            .trim();
+        final partnerAge = jsonMap['partnerAge'] is num
+            ? (jsonMap['partnerAge'] as num).toInt()
+            : (jsonMap['pta'] is num
+                ? (jsonMap['pta'] as num).toInt()
+                : (jsonMap['fatherAge'] is num
+                    ? (jsonMap['fatherAge'] as num).toInt()
+                    : int.tryParse((jsonMap['partnerAge'] ?? jsonMap['pta'] ?? jsonMap['fatherAge'])?.toString() ?? '')));
+        final mohAreaVal = (jsonMap['mohArea'] ?? jsonMap['moh'] ?? '').toString().trim();
+        final phmAreaVal = (jsonMap['phmArea'] ?? jsonMap['phmRegisterNo'] ?? jsonMap['phm'] ?? '').toString().trim();
+        final gnDivisionVal = (jsonMap['gnDivision'] ?? jsonMap['gramaNiladari'] ?? jsonMap['loc'] ?? jsonMap['locality'] ?? '').toString().trim();
 
         profile = BasicProfile(
           motherName: motherName.isNotEmpty ? motherName : 'Mother',
@@ -219,23 +235,25 @@ class MidwifeSyncService {
               DateTime(2024, 6, 9),
           nationalId: nationalId.isNotEmpty ? nationalId : '199856201458',
           address: address.isNotEmpty ? address : 'Rampur North Sector 2',
-          phoneNumber: (jsonMap['phone'] ?? jsonMap['phoneNumber'])?.toString(),
-          clinicName: clinicName.isNotEmpty ? clinicName : 'Rampur MOH Clinic',
+          phoneNumber: (jsonMap['phone'] ?? jsonMap['phoneNumber'] ?? jsonMap['ph'])?.toString(),
+          clinicName: clinicName.isNotEmpty ? clinicName : (mohAreaVal.isNotEmpty ? '$mohAreaVal MOH Clinic' : 'Rampur MOH Clinic'),
           mother: ParentDetails(
             age: ageVal,
             education: EducationLevel.secondary,
-            occupation: (jsonMap['occupation'] ?? 'Homemaker').toString(),
+            occupation: (jsonMap['motherOccupation'] ?? jsonMap['occupation'] ?? 'Homemaker').toString(),
           ),
           father: ParentDetails(
-            age: 28,
+            age: partnerAge ?? 30,
             education: EducationLevel.secondary,
-            occupation: partnerName.isNotEmpty ? partnerName : 'Sunil Shantha',
+            occupation: partnerOccupation.isNotEmpty
+                ? partnerOccupation
+                : 'Self-Employed',
           ),
-          mohArea: (jsonMap['mohArea'] ?? 'Rampur').toString(),
-          phmArea: (jsonMap['phmArea'] ?? 'Rampur North Sector 2').toString(),
-          gramaNiladariDivision: (jsonMap['gnDivision'] ?? jsonMap['gramaNiladari'] ?? 'Rampur Central').toString(),
-          emergencyContactPerson: partnerName.isNotEmpty ? partnerName : 'Sunil Shantha',
-          emergencyContactPhone: (jsonMap['emergencyPhone'] ?? '1990 (Suwa Seriya Ambulance)').toString(),
+          mohArea: mohAreaVal.isNotEmpty ? mohAreaVal : 'Rampur',
+          phmArea: phmAreaVal.isNotEmpty ? phmAreaVal : (address.isNotEmpty ? address : 'Rampur North Sector 2'),
+          gramaNiladariDivision: gnDivisionVal.isNotEmpty ? gnDivisionVal : (address.isNotEmpty ? address : 'Rampur Central'),
+          emergencyContactPerson: partnerName.isNotEmpty ? partnerName : 'Partner',
+          emergencyContactPhone: (jsonMap['emergencyPhone'] ?? jsonMap['phone'] ?? jsonMap['ph'] ?? '1990 (Suwa Seriya Ambulance)').toString(),
           emergencyContactAddress: address.isNotEmpty ? address : 'Rampur North Sector 2',
         );
 
@@ -1657,16 +1675,24 @@ class MidwifeSyncService {
   /// ```
   static Map<String, dynamic> _expandCompactPayload(
       Map<String, dynamic> c) {
+    final String mohVal = (c['moh'] ?? c['mohArea'] ?? '').toString().trim();
+    final String vilVal = (c['vil'] ?? c['village'] ?? c['address'] ?? c['loc'] ?? c['locality'] ?? '').toString().trim();
+    final String phmVal = (c['phm'] ?? c['phmArea'] ?? c['phmRegisterNo'] ?? '').toString().trim();
+    final String nicVal = (c['nic'] ?? c['nicNo'] ?? c['nationalId'] ?? c['pid'] ?? '').toString().trim();
+    final String phoneVal = (c['ph'] ?? c['phone'] ?? c['phoneNumber'] ?? '').toString().trim();
+    final String ptoVal = (c['pto'] ?? c['partnerOccupation'] ?? c['fatherOccupation'] ?? '').toString().trim();
+    final dynamic ptaVal = c['pta'] ?? c['partnerAge'] ?? c['fatherAge'];
+
     final Map<String, dynamic> out = <String, dynamic>{
       'app': 'MaternaVault',
       'ver': '2.0.0-compact',
       'ro': c['ro'] ?? c['is_clinical_readonly'] ?? 1,
-      'village': 'Rampur North Sector 2',
-      'clinic': 'Rampur MOH Clinic',
-      'mohArea': 'Rampur',
-      'phmArea': 'Rampur North Sector 2',
-      'nationalId':
-          (c['nic'] ?? c['nationalId'] ?? c['pid'] ?? '199856201458').toString(),
+      'village': vilVal.isNotEmpty ? vilVal : 'Rampur North Sector 2',
+      'address': vilVal.isNotEmpty ? vilVal : 'Rampur North Sector 2',
+      'clinic': mohVal.isNotEmpty ? '$mohVal MOH Clinic' : 'Rampur MOH Clinic',
+      'mohArea': mohVal.isNotEmpty ? mohVal : 'Rampur',
+      'phmArea': phmVal.isNotEmpty ? phmVal : 'Rampur North Sector 2',
+      'nationalId': nicVal.isNotEmpty ? nicVal : '199856201458',
     };
 
     // ── Top-level scalars ──
@@ -1683,10 +1709,38 @@ class MidwifeSyncService {
     if (c['epds'] != null) out['epds'] = c['epds'];
     if (c['chk'] != null) out['chk'] = c['chk'];
 
-    // Partner name (stored in BasicProfile as father / husband and emergency contact)
+    // Partner name and occupation (stored in BasicProfile as father / husband)
     if (c['pt'] != null) {
       out['partnerName'] = c['pt'];
       out['emergencyContactPerson'] = c['pt'];
+    }
+    if (ptoVal.isNotEmpty) {
+      out['partnerOccupation'] = ptoVal;
+      out['fatherOccupation'] = ptoVal;
+    }
+    if (ptaVal != null) {
+      out['partnerAge'] = ptaVal;
+      out['fatherAge'] = ptaVal;
+    }
+    if (mohVal.isNotEmpty) {
+      out['mohArea'] = mohVal;
+    }
+    if (vilVal.isNotEmpty) {
+      out['village'] = vilVal;
+      out['address'] = vilVal;
+    }
+    if (phmVal.isNotEmpty) {
+      out['phmArea'] = phmVal;
+      out['phmRegisterNo'] = phmVal;
+    }
+    if (nicVal.isNotEmpty) {
+      out['nationalId'] = nicVal;
+      out['nicNo'] = nicVal;
+    }
+    if (phoneVal.isNotEmpty) {
+      out['phone'] = phoneVal;
+      out['phoneNumber'] = phoneVal;
+      out['emergencyPhone'] = phoneVal;
     }
 
     // ── Vitals ──
